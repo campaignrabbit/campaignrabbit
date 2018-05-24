@@ -1,0 +1,30 @@
+{
+
+    "name": "plugins/campaignrabbit",
+    "description": "CampaignRabbit PHP Client Library",
+    "type": "project",
+    "license": "GPL",
+    "authors": [
+        {
+            "name": "Cartrabbit",
+            "email": "rvprashanthi@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev",
+
+    "require": {
+        "guzzlehttp/guzzle": "dev-master"
+    },
+
+
+    "autoload": {
+        "psr-4": {
+            "CampaignRabbit\\CampaignRabbit\\": "src/"
+
+        }
+
+    }
+
+
+
+}

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<extension type="package" version="3.0" method="upgrade">
+    <name>Package - Campaign Rabbit</name>
+    <author>Alagesan</author>
+    <creationDate>May 2018</creationDate>
+    <packagename>CampaignRabbit</packagename>
+    <version>1.0.0</version>
+    <url>https://www.j2store.org</url>
+    <packager>Alagesan</packager>
+    <packagerurl>https://www.j2store.org</packagerurl>
+
+    <description>Campaign Rabbit package contains Campaign Rabbit app and Campaign Rabbit system plugin</description>
+    <files folder="packages">
+        <file type="plugin" id="app_campaignrabbit" group="j2store">plg_j2store_app_campaignrabbit.zip</file>
+        <file type="system" id="system_campaignrabbit" >plg_system_campaignrabbit.zip</file>
+    </files>
+</extension>
