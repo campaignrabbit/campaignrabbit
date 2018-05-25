@@ -86,7 +86,7 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
     /**
      * Add Customer details to Queue
      *   */
-    function onJ2StoreCheckoutShippingPayment($order){
+    /*function onJ2StoreCheckoutShippingPayment($order){
         $session = JFactory::getSession();
         $address_id = $session->get('billing_address_id','','j2store');
 
@@ -138,7 +138,109 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
                 $this->_log($e->getMessage(),'User Exception: ');
             }
         }
+    }*/
+
+    public function onJ2StoreAfterDisplayShippingPayment($order){
+        return $this->displayOptIn('payment');
     }
+
+    public function displayOptIn($opt_in_type){
+        $html = '';
+        $opt_in_postion = $this->params->get('opt_in_position','payment');
+        $enable_opt_in = $this->params->get('enable_opt_in',0);
+        if(($opt_in_postion == $opt_in_type) && $enable_opt_in){
+            $vars = new JObject();
+            $vars->params = $this->params;
+            $html = $this->_getLayout('optin_check', $vars);
+        }
+        return $html;
+    }
+
+    public function onJ2StoreCheckoutValidateShippingPayment($values, $order){
+        $session = JFactory::getSession();
+        $address_id = $session->get('billing_address_id','','j2store');
+        $session->set('app_campainrabbit_order',0,'j2store');
+        $check_opt_in_status = false;
+        $opt_in = $this->params->get('enable_opt_in',0);
+        if(!$opt_in){
+            $check_opt_in_status = true;
+        }elseif($opt_in && isset($values['app_camp_rabbit_opt_in']) && $values['app_camp_rabbit_opt_in']){
+            $check_opt_in_status = true;
+        }
+        if($address_id && $check_opt_in_status) {
+            $session->set('app_campainrabbit_order',1,'j2store');
+            $user = JFactory::getUser();
+            $address = F0FTable::getInstance('Address', 'J2StoreTable')->getClone();
+            $address->load($address_id);
+            if(isset($address->campaign_addr_id) && !empty($address->campaign_addr_id)){
+                $task = 'update_customer';
+            }else{
+                $task = 'create_customer';
+            }
+
+            $ship_address_id = $session->get('shipping_address_id','','j2store');
+            $queue_data = array(
+                'user_id' => $user->id,
+                'email' => $address->email,
+                'ship_address_id' => $ship_address_id,
+                'billing_address_id' => $address_id,
+                'task' => $task
+            );
+
+            $tz = JFactory::getConfig()->get('offset');
+            $current_date = JFactory::getDate('now', $tz)->toSql(true);
+            $date = JFactory::getDate('now +7 day', $tz)->toSql(true);
+
+            $queue = array(
+                'queue_type' => $this->_element,
+                'relation_id' => 'user_'.$address_id,
+                'queue_data' => json_encode($queue_data),
+                'params' => '{}',
+                'priority' => 0,
+                'status' => 'new',
+                'expired' => $date,
+                'modified_on' => $current_date
+            );
+            try{
+                $queue_table = F0FTable::getInstance('Queue', 'J2StoreTable')->getClone();
+                $queue_table->load(array(
+                    'relation_id' => $queue['relation_id']
+                ));
+                if(empty($queue_table->created_on)){
+                    $queue_table->created_on = $current_date;
+                }
+                $queue_table->bind($queue);
+                $queue_table->store();
+            }catch (Exception $e){
+                // do nothing
+                $this->_log($e->getMessage(),'User Exception: ');
+            }
+        }
+    }
+
+    public function onJ2StorePrePayment($orderpayment_type, $data){
+        if(isset($data['order_id']) && !empty($data['order_id'])){
+            F0FTable::addIncludePath(JPATH_ADMINISTRATOR.'/components/com_j2store/tables');
+            $order = F0FTable::getInstance ( 'Order', 'J2StoreTable' )->getClone ();
+            $order->load ( array (
+                'order_id' => $data ['order_id']
+            ) );
+            $session = JFactory::getSession();
+            $campaign_status = $session->get('app_campainrabbit_order',0,'j2store');
+            $order_params = $this->getRegistryObject($order->order_params);
+            if($campaign_status){
+                $order_params->set('app_campainrabbit_order',1);
+                $order->order_params = $order_params->toString();
+                $order->store();
+            }else{
+                $order_params->set('app_campainrabbit_order',0);
+                $order->order_params = $order_params->toString();
+                $order->store();
+            }
+
+        }
+    }
+
 
     /**
      * Add Order details to Queue Table
@@ -155,6 +257,18 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
                 //remove from queue
                 return '';
             }
+        }
+        $order_params = $this->getRegistryObject($order->order_params);
+        $order_campaign_status = $order_params->get('app_campainrabbit_order',0);
+        $opt_in = $this->params->get('enable_opt_in',0);
+        $check_opt_in_status = false;
+        if(!$opt_in){
+            $check_opt_in_status = true;
+        }elseif($opt_in && $order_campaign_status){
+            $check_opt_in_status = true;
+        }
+        if(!$check_opt_in_status){
+            return '';
         }
 
         if(!empty($order->campaign_order_id)){
