@@ -130,10 +130,11 @@ class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
             $response = $campaign->request('POST','user/store/auth','');
             $out_response = $campaign->parseResponse($response);
         }catch (Exception $e){
+            $ex_body = $e->getBody()->getContents();
             $out_response = array(
                 'message'=> $e->getReasonPhrase(),
                 'code'=>$e->getStatusCode(),
-                'body'=> $e->getBody()->getContents()
+                'body'=> isset($ex_body->data) ? $ex_body->data: $ex_body
             );
         }
         return $out_response;
@@ -153,10 +154,11 @@ class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
             $customer = new \CampaignRabbit\CampaignRabbit\Action\Customer($api_token,$app_id,$domain);
             $out_response = $customer->getCustomer($email);
         }catch (Exception $e){
+            $ex_body = $e->getBody()->getContents();
             $out_response = array(
                 'message'=> $e->getReasonPhrase(),
                 'code'=>$e->getStatusCode(),
-                'body'=> $e->getBody()->getContents()
+                'body'=> isset($ex_body->data) ? $ex_body->data: $ex_body
             );
         }
         return $out_response;
@@ -184,14 +186,16 @@ class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
 
             $out_response = $customer->updateCustomer($where,$email);
         }catch (Exception $e){
+            $ex_body = $e->getBody()->getContents();
             $out_response = array(
                 'message'=> $e->getReasonPhrase(),
                 'code'=>$e->getStatusCode(),
-                'body'=> $e->getBody()->getContents()
+                'body'=> isset($ex_body->data) ? $ex_body->data: $ex_body
             );
         }
         return $out_response;
     }
+
 
     /**
      * Create Customer to Campaign Rabbit
@@ -216,10 +220,11 @@ class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
             $out_response = $customer->createCustomer($where);//$campaign->request('POST','customer',json_encode($where));
             //$out_response = $campaign->parseResponse($response);
         }catch (Exception $e){
+            $ex_body = $e->getBody()->getContents();
             $out_response = array(
                 'message'=> $e->getReasonPhrase(),
                 'code'=>$e->getStatusCode(),
-                'body'=> $e->getBody()->getContents()
+                'body'=> isset($ex_body->data) ? $ex_body->data: $ex_body
             );
         }
         return $out_response;
@@ -239,10 +244,11 @@ class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
             $rabbit_order = new \CampaignRabbit\CampaignRabbit\Action\Order($api_token,$app_id,$domain);
             $out_response = $rabbit_order->getOrder($order->order_id);
         }catch (Exception $e){
+            $ex_body = $e->getBody()->getContents();
             $out_response = array(
                 'message'=> $e->getReasonPhrase(),
                 'code'=>$e->getStatusCode(),
-                'body'=> $e->getBody()->getContents()
+                'body'=> isset($ex_body->data) ? $ex_body->data: $ex_body
             );
         }
         return $out_response;
@@ -265,18 +271,20 @@ class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
             if(isset($old_rabbit_order['body']->id)){
                 $out_response = $rabbit_order->updateOrder($order_params,$old_rabbit_order['body']->id);
             }else{
+                $ex_body = $old_rabbit_order->getBody()->getContents();
                 $out_response = array(
                     'message'=> $old_rabbit_order->getReasonPhrase(),
                     'code'=> $old_rabbit_order->getStatusCode(),
-                    'body'=> $old_rabbit_order->getBody()->getContents()
+                    'body'=> isset($ex_body->data) ? $ex_body->data: $ex_body//$old_rabbit_order->getBody()->getContents()
                 );
             }
 
         }catch (Exception $e){
+            $ex_body = $e->getBody()->getContents();
             $out_response = array(
                 'message'=> $e->getReasonPhrase(),
                 'code'=>$e->getStatusCode(),
-                'body'=> $e->getBody()->getContents()
+                'body'=> isset($ex_body->data) ? $ex_body->data: $ex_body
             );
         }
         return $out_response;
@@ -297,10 +305,11 @@ class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
             $rabbit_order = new \CampaignRabbit\CampaignRabbit\Action\Order($api_token,$app_id,$domain);
             $out_response = $rabbit_order->createOrder($order_params);
         }catch (Exception $e){
+            $ex_body = $e->getBody()->getContents();
             $out_response = array(
                 'message'=> $e->getReasonPhrase(),
                 'code'=>$e->getStatusCode(),
-                'body'=> $e->getBody()->getContents()
+                'body'=> isset($ex_body->data) ? $ex_body->data: $ex_body
             );
         }
         return $out_response;
@@ -340,10 +349,11 @@ class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
                 $order->add_history($product_params['sku']. ' - Campaign Rabbit Product id: '.$product_response['body']->id);
             }
         }catch (Exception $e){
+            $ex_body = $e->getBody()->getContents();
             $out_response = array(
                 'message'=> $e->getReasonPhrase(),
                 'code'=>$e->getStatusCode(),
-                'body'=> $e->getBody()->getContents()
+                'body'=> isset($ex_body->data) ? $ex_body->data: $ex_body
             );
             $this->_log(json_encode($out_response),'Product Error: ');
             $order->add_history($product_params['sku']. ' - Campaign Rabbit Product Error: '.json_encode($out_response));

@@ -56,7 +56,7 @@
                     <option value="1">J2STORE_YES</option>
                 </field>
 
-                <field name="orderstatus" type="orderstatuslist" default="1" label="j2store_campaignrabbit_orderstatuslist" description="j2store_campaignrabbit_orderstatuslist_desc"
+                <field name="orderstatus" type="orderstatuslist" multiple="multiple" default="1" label="j2store_campaignrabbit_orderstatuslist" description="j2store_campaignrabbit_orderstatuslist_desc"
                        addfieldpath="/administrator/components/com_j2store/models/fields"/>
 
                 <field name="debug" type="radio" default="0" class="btn-group" label="j2store_campaignrabbit_debug" description="j2store_campaignrabbit_debug_desc">

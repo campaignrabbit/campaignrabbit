@@ -78,11 +78,11 @@ class Request{
 
     function parseResponse($response){
 
-
+        $ex_body = $response->getBody()->getContents();
             $parsed_response = array(
                 'message'=> $response->getReasonPhrase(),
                 'code'=>$response->getStatusCode(),
-                'body'=> $response->getBody()->getContents()
+                'body'=> isset($ex_body->data) ? $ex_body->data: $ex_body
             );
 
 
