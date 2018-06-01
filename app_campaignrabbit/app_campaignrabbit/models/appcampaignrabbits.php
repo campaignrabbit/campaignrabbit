@@ -183,7 +183,6 @@ class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
                 'name' => $name,
                 'meta' => $metas,
             );
-
             $out_response = $customer->updateCustomer($where,$email);
         }catch (Exception $e){
             $ex_body = $e->getBody()->getContents();
@@ -242,7 +241,7 @@ class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
             $app_id = $params->get('app_id','');
             $domain = trim(JUri::root());
             $rabbit_order = new \CampaignRabbit\CampaignRabbit\Action\Order($api_token,$app_id,$domain);
-            $out_response = $rabbit_order->getOrder($order->order_id);
+            $out_response = $rabbit_order->getOrderByRef($order->order_id);
         }catch (Exception $e){
             $ex_body = $e->getBody()->getContents();
             $out_response = array(
@@ -267,7 +266,7 @@ class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
             $app_id = $params->get('app_id','');
             $domain = trim(JUri::root());
             $rabbit_order = new \CampaignRabbit\CampaignRabbit\Action\Order($api_token,$app_id,$domain);
-            $old_rabbit_order = $rabbit_order->getOrder($order->order_id);
+            $old_rabbit_order = $rabbit_order->getOrderByRef($order->order_id);
             if(isset($old_rabbit_order['body']->id)){
                 $out_response = $rabbit_order->updateOrder($order_params,$old_rabbit_order['body']->id);
             }else{

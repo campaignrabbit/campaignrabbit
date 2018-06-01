@@ -60,9 +60,15 @@ class Order extends Request {
 
         return $parsed_response;
 
-
-
     }
+//order/get_by_r_id/{id}
+    public function getOrderByRef($order_id){
+        $response=$this->request->request('GET', $this->uri.'/get_by_r_id/'.$order_id, '');
+        $parsed_response=$this->request->parseResponse($response);
+
+        return $parsed_response;
+    }
+
 
     /**
      * @param $body

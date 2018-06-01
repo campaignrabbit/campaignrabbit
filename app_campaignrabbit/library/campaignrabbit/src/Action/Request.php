@@ -79,14 +79,13 @@ class Request{
     function parseResponse($response){
 
         $ex_body = $response->getBody()->getContents();
-            $parsed_response = array(
-                'message'=> $response->getReasonPhrase(),
-                'code'=>$response->getStatusCode(),
-                'body'=> isset($ex_body->data) ? $ex_body->data: $ex_body
-            );
-
-
-        $parsed_response['body'] = isset($parsed_response['body']) ? json_decode($parsed_response['body']): new stdClass();
+        $ex_body = !empty($ex_body) ? json_decode($ex_body) : new \stdClass();
+        $parsed_response = array(
+            'message'=> $response->getReasonPhrase(),
+            'code'=>$response->getStatusCode(),
+            'body'=> isset($ex_body->data) ? $ex_body->data: $ex_body
+        );
+        //$parsed_response['body'] = isset($parsed_response['body']) ? json_decode($parsed_response['body']): new stdClass();
 
         return $parsed_response;
 

@@ -22,7 +22,7 @@ class Customer extends Request
     public function __construct($api_token, $app_id , $domain)
     {
         $this->uri = 'customer';
-        $this->request =(new Request($api_token, $app_id, $domain));
+        $this->request = (new Request($api_token, $app_id, $domain));
     }
 
     /**
@@ -39,9 +39,8 @@ class Customer extends Request
 
     public function getCustomer($email){
 
-        $response=$this->request->request('GET',$this->uri.'/get_by_email/'.$email,'');
-        $parsed_response=$this->request->parseResponse($response);
-
+        $response = $this->request->request('GET',$this->uri.'/get_by_email/'.$email,'');
+        $parsed_response = $this->request->parseResponse($response);
         return $parsed_response;
 
     }
@@ -55,13 +54,13 @@ class Customer extends Request
     {
 
         $json_body = json_encode($body);
-        $response=$this->request->request('POST', $this->uri, $json_body);
-        $parsed_response=$this->request->parseResponse($response);
+        $response = $this->request->request('POST', $this->uri, $json_body);
+        $parsed_response = $this->request->parseResponse($response);
 
         return $parsed_response;
 
     }
-
+    
 
     /**
      * @param $body
@@ -71,14 +70,17 @@ class Customer extends Request
     {
 
         $json_body = json_encode($body);
-        $customer_response=$this->request->request('GET',$this->uri.'/get_by_email/'.$old_email,'');
-        if($customer_response->getStatusCode()!=200){
-            $parsed_response=$this->request->parseResponse($customer_response);
+        $customer_response = $this->request->request('GET',$this->uri.'/get_by_email/'.$old_email,'');
+        if($customer_response->getStatusCode() != 200){
+            $parsed_response = $this->request->parseResponse($customer_response);
             return $parsed_response;
         }
-        $id=json_decode($customer_response->getBody()->getContents(),true)['id'];
-        $response=$this->request->request('PUT', $this->uri . '/' . $id, $json_body);
-        $parsed_response=$this->request->parseResponse($response);
+
+        $customer_response = $this->request->parseResponse($customer_response);
+        $id = isset($customer_response['body']->id) ? $customer_response['body']->id:'';
+        //json_decode($customer_response->getBody()->getContents(),true)['id'];
+        $response = $this->request->request('PUT', $this->uri . '/' . $id, $json_body);
+        $parsed_response = $this->request->parseResponse($response);
 
         return $parsed_response;
 
@@ -88,12 +90,14 @@ class Customer extends Request
 
     public function deleteCustomer($email)
     {
-        $customer_response=$this->request->request('GET',$this->uri.'/get_by_email/'.$email,'');
-        if($customer_response->getStatusCode()!=200){
-            $parsed_response=$this->request->parseResponse($customer_response);
+        $customer_response = $this->request->request('GET',$this->uri.'/get_by_email/'.$email,'');
+        if($customer_response->getStatusCode() != 200){
+            $parsed_response = $this->request->parseResponse($customer_response);
             return $parsed_response;
         }
-        $id=json_decode($customer_response->getBody()->getContents(),true)['id'];
+        $customer_response = $this->request->parseResponse($customer_response);
+        $id = isset($customer_response['body']->id) ? $customer_response['body']->id:'';
+
         $response = $this->request->request('DELETE', $this->uri . '/' . $id, '');
         $parsed_response = $this->request->parseResponse($response);
 

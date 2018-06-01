@@ -599,10 +599,12 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
                 // update customer
                 $out_response = $model->updateRabbitOrder($order,$order_params);
             }else{
+
                 // create customer
                 $out_response = $model->createRabbitOrder($order,$order_params);
 
             }
+
             if(isset($out_response['body']->id)){
                 $this->_log(json_encode($out_response),'Invoice Create/Update: ');
                 $order_status = true;
@@ -618,12 +620,6 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
 
     }
 
-    /**
-     * Syncronize Product to Campaign rabbit
-    */
-    public function addProducts($order,&$insert_data){
-
-    }
 
     public function onJ2StoreAdminOrderAfterGeneralInformation($order_view){
         $is_enable_manuval = $this->params->get('syn_manual',0);
