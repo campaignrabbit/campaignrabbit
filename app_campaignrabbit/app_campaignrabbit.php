@@ -56,7 +56,8 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
      */
     function viewList ()
     {
-
+        $user = JFactory::getUser();
+        $this->getUserGroups($user->id);
         $app = JFactory::getApplication ();
         $vars = new stdClass();
         $id = $app->input->getInt ( 'id', 0 );
@@ -396,6 +397,23 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
         }
     }
 
+    function getUserGroups($id){
+        $groups = JAccess::getGroupsByUser($id);
+        $groupid_list      = '(' . implode(',', $groups) . ')';
+        $db = JFactory::getDBo();
+        $query  = $db->getQuery(true);
+        $query->select('title');
+        $query->from('#__usergroups');
+        $query->where('id IN ' .$groupid_list);
+        $db->setQuery($query);
+        $rows   = $db->loadObjectList();
+        $final_list = array();
+        foreach ($rows as $row){
+            $final_list[] = $row->title;
+        }
+        return implode('|',$final_list);
+    }
+
     /**
      * Syncronize to Campaign Rabbit
     */
@@ -464,6 +482,12 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
 
             // customer params
             $metas = array();
+            $metas[] = array(
+                'meta_key' => 'CUSTOMER_GROUP',
+                'meta_value' => $this->getUserGroups($user_id),
+                'meta_options' => ''
+            );
+
             foreach ($address as $key => $value){
                 if($key == "country_id"){
                     $country_name = $this->getCountryById($address->country_id)->country_name;
