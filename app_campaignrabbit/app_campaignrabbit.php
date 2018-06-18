@@ -310,6 +310,51 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
         }
     }
 
+    function onJ2StoreCheckoutAfterRegister(){
+        $session = JFactory::getSession();
+        $address_id = $session->get('billing_address_id', '' , 'j2store');
+        $address = F0FTable::getInstance('Address', 'J2StoreTable')->getClone();
+        if($address->load($address_id)){
+            $task = 'create_customer';
+            $queue_data = array(
+                'user_id' => $address->user_id,
+                'email' => $address->email,
+                'ship_address_id' => $address_id,
+                'billing_address_id' => $address_id,
+                'task' => $task
+            );
+
+            $tz = JFactory::getConfig()->get('offset');
+            $current_date = JFactory::getDate('now', $tz)->toSql(true);
+            $date = JFactory::getDate('now +7 day', $tz)->toSql(true);
+
+            $queue = array(
+                'queue_type' => $this->_element,
+                'relation_id' => 'user_'.$address->j2store_address_id,
+                'queue_data' => json_encode($queue_data),
+                'params' => '{}',
+                'priority' => 0,
+                'status' => 'new',
+                'expired' => $date,
+                'modified_on' => $current_date
+            );
+            try{
+                $queue_table = F0FTable::getInstance('Queue', 'J2StoreTable')->getClone();
+                $queue_table->load(array(
+                    'relation_id' => $queue['relation_id']
+                ));
+                if(empty($queue_table->created_on)){
+                    $queue_table->created_on = $current_date;
+                }
+                $queue_table->bind($queue);
+                $queue_table->store();
+            }catch (Exception $e){
+                // do nothing
+                $this->_log($e->getMessage(),'Customer Checkout Register Exception: ');
+            }
+        }
+    }
+
     /**
      * Process Queue
     */
@@ -396,8 +441,14 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
                 'user_id' => $user_id
             ));
         }
-        $country_name = $this->getCountryById($address->country_id)->country_name;
-        $state = $this->getZoneById($address->zone_id)->zone_name;
+        if(empty($address->j2store_address_id)){
+            $user = JFactory::getUser($user_id);
+            $name = $user->username;
+        }else{
+            $name = $address->first_name.' '. $address->last_name;
+        }
+
+
         $contact_status = false;
         try{
             // check customer exit
@@ -415,8 +466,10 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
             $metas = array();
             foreach ($address as $key => $value){
                 if($key == "country_id"){
+                    $country_name = $this->getCountryById($address->country_id)->country_name;
                     $value = $country_name;
                 }elseif($key == 'zone_id'){
+                    $state = $this->getZoneById($address->zone_id)->zone_name;
                     $value = $state;
                 }
                 $meta = array();
@@ -428,7 +481,7 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
                 $meta['meta_options'] = '';
                 $metas[] = $meta;
             }
-            $name = $address->first_name.' '. $address->last_name;
+            //$name = $address->first_name.' '. $address->last_name;
 
             if($is_need_update){
                 // update customer

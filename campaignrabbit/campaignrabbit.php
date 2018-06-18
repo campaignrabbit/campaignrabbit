@@ -46,4 +46,73 @@ class plgSystemCampaignrabbit extends JPlugin {
             $document->addScriptDeclaration($script_content);
         }
     }
+
+    function onUserAfterSave($user,$isnew,$success,$msg){
+
+        if($isnew && JPluginHelper::isEnabled('j2store', 'app_campaignrabbit')){
+            $task = 'create_customer';
+            $queue_data = array(
+                'user_id' => $user['id'],
+                'email' => $user['email'],
+                'ship_address_id' => 0,
+                'billing_address_id' => 0,
+                'task' => $task
+            );
+
+            $tz = JFactory::getConfig()->get('offset');
+            $current_date = JFactory::getDate('now', $tz)->toSql(true);
+            $date = JFactory::getDate('now +7 day', $tz)->toSql(true);
+
+            $queue = array(
+                'queue_type' => 'app_campaignrabbit',
+                'relation_id' => 'user_reg_'.$user['id'],
+                'queue_data' => json_encode($queue_data),
+                'params' => '{}',
+                'priority' => 0,
+                'status' => 'new',
+                'expired' => $date,
+                'modified_on' => $current_date
+            );
+
+            try{
+                F0FTable::addIncludePath(JPATH_ADMINISTRATOR.'/components/com_j2store/tables');
+                $queue_table = F0FTable::getInstance('Queue', 'J2StoreTable')->getClone();
+                $queue_table->load(array(
+                    'relation_id' => $queue['relation_id']
+                ));
+                if(empty($queue_table->created_on)){
+                    $queue_table->created_on = $current_date;
+                }
+                $queue_table->bind($queue);
+                $queue_table->store();
+            }catch (Exception $e){
+                // do nothing
+                $this->_log($e->getMessage(),'User Register Queue Exception: ');
+            }
+        }
+    }
+
+    /**
+     * Simple logger
+     *
+     * @param string $text
+     * @param string $type
+     * @return void
+     */
+    function _log($text, $type = 'message')
+    {
+        $plugin_data = JPluginHelper::getPlugin('j2store', 'app_campaignrabbit');
+        $params = new \JRegistry;
+        $params->loadString($plugin_data->params);
+        $isLog = $params->get('debug',0);
+        if ($isLog) {
+            $file = JPATH_ROOT . "/cache/app_campaignrabbit.log";
+            $date = JFactory::getDate();
+
+            $f = fopen($file, 'a');
+            fwrite($f, "\n\n" . $date->format('Y-m-d H:i:s'));
+            fwrite($f, "\n" . $type . ': ' . $text);
+            fclose($f);
+        }
+    }
 }
