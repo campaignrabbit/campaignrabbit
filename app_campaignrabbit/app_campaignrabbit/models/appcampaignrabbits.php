@@ -345,7 +345,7 @@ class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
 
             if(isset($product_response['body']->sku)){
                 $this->_log(json_encode($product_response),'Product Create/Update: ');
-                $order->add_history($product_params['sku']. ' - Campaign Rabbit Product id: '.$product_response['body']->id);
+                $order->add_history('Campaign Rabbit Product sku : '.$product_params['sku']);
             }
         }catch (Exception $e){
             $ex_body = $e->getBody()->getContents();

@@ -98,10 +98,14 @@ class J2StoreControllerAppCampaignRabbit extends J2StoreAppController
                     }
                     $queue_table->bind($queue);
                     $queue_table->store();
+                    $customer_note = JText::sprintf('J2STORE_APP_CAMPAIGNRABBIT_CUSTOMER_ADD_TO_QUEUE',$address->email);
+                    $order->add_history($customer_note);
                 }catch (Exception $e){
                     // do nothing
                     $this->_log($e->getMessage(),'Backend Admin Customer Exception: ');
                     $json['error'] = $e->getMessage();
+                    $customer_note_error = JText::sprintf('J2STORE_APP_CAMPAIGNRABBIT_CUSTOMER_ADD_TO_QUEUE_FAILED',json_encode($e->getMessage()));
+                    $order->add_history($customer_note_error);
                 }
 
             }
@@ -142,9 +146,13 @@ class J2StoreControllerAppCampaignRabbit extends J2StoreAppController
                     $queue_table->bind($queue);
                     $queue_table->store();
                     $json['success'] = 1;
+                    $order_note = JText::sprintf('J2STORE_APP_CAMPAIGNRABBIT_ORDER_ADD_TO_QUEUE',$order->order_id);
+                    $order->add_history($order_note);
                 }catch (Exception $e){
                     $this->_log($e->getMessage(),'Order task Exception: ');
                     $json['error'] = $e->getMessage();
+                    $order_note_failed = JText::sprintf('J2STORE_APP_CAMPAIGNRABBIT_ORDER_ADD_TO_QUEUE_FAILED',json_encode($e->getMessage()));
+                    $order->add_history($order_note_failed);
                 }
             }
         }
