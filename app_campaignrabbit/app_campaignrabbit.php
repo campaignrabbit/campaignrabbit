@@ -56,8 +56,6 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
      */
     function viewList ()
     {
-        $user = JFactory::getUser();
-        $this->getUserGroups($user->id);
         $app = JFactory::getApplication ();
         $vars = new stdClass();
         $id = $app->input->getInt ( 'id', 0 );
@@ -459,8 +457,8 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
                 'user_id' => $user_id
             ));
         }
+        $user = JFactory::getUser($user_id);
         if(empty($address->j2store_address_id)){
-            $user = JFactory::getUser($user_id);
             $name = $user->username;
         }else{
             $name = $address->first_name.' '. $address->last_name;
@@ -506,13 +504,20 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
                 $metas[] = $meta;
             }
             //$name = $address->first_name.' '. $address->last_name;
-
+            $customer_params = array(
+                'email' => $email,
+                'created_at' => $user->registerDate,
+                'updated_at' => $user->registerDate,
+                'name' => $name,
+                'meta' => $metas,
+            );
             if($is_need_update){
                 // update customer
-                $out_response = $model->updateCustomer($email,$name,$metas);
+                $out_response = $model->updateCustomer($customer_params,$email);
             }else{
+
                 // create customer
-                $out_response = $model->createCustomer($email,$name,$metas);
+                $out_response = $model->createCustomer($customer_params);
 
             }
 
@@ -661,7 +666,9 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
             'meta' => $metas,
             'order_items' => $items,
             'shipping' => $shipping_address,
-            'billing' => $billing_address
+            'billing' => $billing_address,
+            'created_at' => $order->created_on,
+            'updated_at' => $order->modified_on
         );
         $order_status = false;
         try{

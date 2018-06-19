@@ -171,19 +171,15 @@ class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
      * @param $metas - customer meta data
      * @param array - Response
      */
-    public function updateCustomer($email, $name,$metas = array()){
+    public function updateCustomer($customer_params,$email){
         $params = $this->getPluginParams();
         try{
             $api_token = $params->get('api_token','');
             $app_id = $params->get('app_id','');
             $domain = trim(JUri::root());
             $customer = new \CampaignRabbit\CampaignRabbit\Action\Customer($api_token,$app_id,$domain);
-            $where = array(
-                'email' => $email,
-                'name' => $name,
-                'meta' => $metas,
-            );
-            $out_response = $customer->updateCustomer($where,$email);
+
+            $out_response = $customer->updateCustomer($customer_params,$email);
         }catch (Exception $e){
             $ex_body = $e->getBody()->getContents();
             $out_response = array(
@@ -203,7 +199,7 @@ class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
      * @param $metas - customer meta data
      * @param array - Response
      */
-    public function createCustomer($email,$name,$metas = array()){
+    public function createCustomer($customer_params){
         $params = $this->getPluginParams();
         try{
             $api_token = $params->get('api_token','');
@@ -211,12 +207,7 @@ class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
             $domain = trim(JUri::root());
             $customer = new \CampaignRabbit\CampaignRabbit\Action\Customer($api_token,$app_id,$domain);
             //$campaign = new \CampaignRabbit\CampaignRabbit\Action\Request($api_token,$app_id,$domain);
-            $where = array(
-                'email' => $email,
-                'name' => $name,
-                'meta' => $metas,
-            );
-            $out_response = $customer->createCustomer($where);//$campaign->request('POST','customer',json_encode($where));
+            $out_response = $customer->createCustomer($customer_params);//$campaign->request('POST','customer',json_encode($where));
             //$out_response = $campaign->parseResponse($response);
         }catch (Exception $e){
             $ex_body = $e->getBody()->getContents();
