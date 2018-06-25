@@ -410,4 +410,52 @@ class J2StoreControllerAppCampaignRabbit extends J2StoreAppController
         $view->setLayout('queue_manage');
         $view->display();
     }
+
+    public function reQueue(){
+        $app = JFactory::getApplication();
+        $is_expired = $app->input->get('is_expired','no');
+        $option = 'com_j2store';
+        $ns = $option.'.app.'.$this->_element;
+        F0FModel::addIncludePath(JPATH_SITE.'/plugins/j2store/'.$this->_element.'/'.$this->_element.'/models');
+        // get Queue list
+        $model = F0FModel::getTmpInstance('AppCampaignRabbits', 'J2StoreModel');
+
+        $model->setState('queue_type',$this->_element);
+
+        $limit		= $app->getUserStateFromRequest( 'global.list.limit', 'limit', $app->getCfg('list_limit'), 'int' );
+        $limitstart	= $app->getUserStateFromRequest( $ns.'.limitstart', 'limitstart', 0, 'int' );
+        $limitstart = ($limit != 0 ? (floor($limitstart / $limit) * $limit) : 0);
+        $filter_order_Dir =  $app->getUserStateFromRequest( $ns.'filter_order_Dir',	'filter_order_Dir',	'',	'word' );
+        $filter_order	= $app->getUserStateFromRequest( $ns.'filter_order',		'filter_order',		'tbl.user_id',	'cmd' );
+        $search = $app->input->getString('search',  $model->getState('search', ''));
+        $model->setState('is_expired', $is_expired);
+        $model->setState('limit', $limit);
+        $model->setState('limitstart', $limitstart);
+        $model->setState('filter_order_Dir', $filter_order_Dir);
+        $model->setState('filter_order', $filter_order);
+        $model->setState('search',$search);
+        $lists = $model->getList();
+        foreach ($lists as $list){
+            $queue_table = F0FTable::getInstance('Queue', 'J2StoreTable')->getClone();
+            $queue_table->load($list->j2store_queue_id);
+            $new_table = clone $queue_table;
+
+            //delete the current queue
+            $queue_table->delete();
+
+            $new_table->j2store_queue_id = '';
+            $tz = JFactory::getConfig()->get('offset');
+            $current_date = JFactory::getDate('now', $tz)->toSql(true);
+            $date_string = 'now +7 day';
+            $date = JFactory::getDate($date_string, $tz)->toSql(true);
+            $new_table->status = 'Requeue';
+            $new_table->expired = $date;
+            $new_table->repeat_count = 0;
+            $new_table->modified_on = $current_date;
+            $new_table->store();
+        }
+        $id = $app->input->get('id',0);
+        $url = "index.php?option=com_j2store&view=app&task=view&appTask=manageQueue&id=".$id;
+        $app->redirect($url,JText::_('J2STORE_CAMPAIGN_RABBIT_QUEUE_RESET_COMPLETED'));
+    }
 }
