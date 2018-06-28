@@ -34,11 +34,12 @@ class J2StoreControllerAppCampaignRabbit extends J2StoreAppController
     public function checkToken(){
         $model = F0FModel::getTmpInstance('AppCampaignRabbits', 'J2StoreModel');
         $out_response = $model->auth();
+
         $json = array();
         if(isset($out_response['body']->error) && !empty($out_response['body']->error)){
             $json['error'] = $out_response['body']->message . ' - '. $out_response['body']->error;
         }elseif(isset($out_response['body']->success) && !empty($out_response['body']->success)){
-            $json['success'] = $out_response['body']->success;
+            $json['success'] = $out_response['body']->message;
         }else{
             $json['error'] = JText::_('J2STORE_CAMPAIGNRABBIT_AUTH_RESPONSE_NOT_FOUND');
         }
@@ -54,7 +55,7 @@ class J2StoreControllerAppCampaignRabbit extends J2StoreAppController
             'order_id' => $order_id
         ));
         $model = F0FModel::getTmpInstance('AppCampaignRabbits', 'J2StoreModel');
-        $params = $model->getPluginParams();
+        //$params = $model->getPluginParams();
         $json = array();
         if( !empty($order_id) && $order_id == $order->order_id){
             $address = $this->getCustomerInfo($order->user_email,$order->user_id);
@@ -73,39 +74,44 @@ class J2StoreControllerAppCampaignRabbit extends J2StoreAppController
                     'billing_address_id' => $address->j2store_address_id,
                     'task' => $task
                 );
+                $customer_queue_params = $model->getRegistryObject(json_encode($queue_data));
 
-                $tz = JFactory::getConfig()->get('offset');
-                $current_date = JFactory::getDate('now', $tz)->toSql(true);
-                $date = JFactory::getDate('now +7 day', $tz)->toSql(true);
+                $customer_status = $model->addCustomer($customer_queue_params);
+                
+                if(!$customer_status){
+                    $tz = JFactory::getConfig()->get('offset');
+                    $current_date = JFactory::getDate('now', $tz)->toSql(true);
+                    $date = JFactory::getDate('now +7 day', $tz)->toSql(true);
 
-                $queue = array(
-                    'queue_type' => $this->_element,
-                    'relation_id' => 'user_'.$address->j2store_address_id,
-                    'queue_data' => json_encode($queue_data),
-                    'params' => '{}',
-                    'priority' => 0,
-                    'status' => 'new',
-                    'expired' => $date,
-                    'modified_on' => $current_date
-                );
-                try{
-                    $queue_table = F0FTable::getInstance('Queue', 'J2StoreTable')->getClone();
-                    $queue_table->load(array(
-                        'relation_id' => $queue['relation_id']
-                    ));
-                    if(empty($queue_table->created_on)){
-                        $queue_table->created_on = $current_date;
+                    $queue = array(
+                        'queue_type' => $this->_element,
+                        'relation_id' => 'user_'.$address->j2store_address_id,
+                        'queue_data' => json_encode($queue_data),
+                        'params' => '{}',
+                        'priority' => 0,
+                        'status' => 'new',
+                        'expired' => $date,
+                        'modified_on' => $current_date
+                    );
+                    try{
+                        $queue_table = F0FTable::getInstance('Queue', 'J2StoreTable')->getClone();
+                        $queue_table->load(array(
+                            'relation_id' => $queue['relation_id']
+                        ));
+                        if(empty($queue_table->created_on)){
+                            $queue_table->created_on = $current_date;
+                        }
+                        $queue_table->bind($queue);
+                        $queue_table->store();
+                        $customer_note = JText::sprintf('J2STORE_APP_CAMPAIGNRABBIT_CUSTOMER_ADD_TO_QUEUE',$address->email);
+                        $order->add_history($customer_note);
+                    }catch (Exception $e){
+                        // do nothing
+                        $this->_log($e->getMessage(),'Backend Admin Customer Exception: ');
+                        $json['error'] = $e->getMessage();
+                        $customer_note_error = JText::sprintf('J2STORE_APP_CAMPAIGNRABBIT_CUSTOMER_ADD_TO_QUEUE_FAILED',json_encode($e->getMessage()));
+                        $order->add_history($customer_note_error);
                     }
-                    $queue_table->bind($queue);
-                    $queue_table->store();
-                    $customer_note = JText::sprintf('J2STORE_APP_CAMPAIGNRABBIT_CUSTOMER_ADD_TO_QUEUE',$address->email);
-                    $order->add_history($customer_note);
-                }catch (Exception $e){
-                    // do nothing
-                    $this->_log($e->getMessage(),'Backend Admin Customer Exception: ');
-                    $json['error'] = $e->getMessage();
-                    $customer_note_error = JText::sprintf('J2STORE_APP_CAMPAIGNRABBIT_CUSTOMER_ADD_TO_QUEUE_FAILED',json_encode($e->getMessage()));
-                    $order->add_history($customer_note_error);
                 }
 
             }
@@ -121,42 +127,51 @@ class J2StoreControllerAppCampaignRabbit extends J2StoreAppController
                     'task' => $task
                 );
 
-                $tz = JFactory::getConfig()->get('offset');
-                $current_date = JFactory::getDate('now', $tz)->toSql(true);
-                $date = JFactory::getDate('now +7 day', $tz)->toSql(true);
+                $order_queue_params = $model->getRegistryObject(json_encode($queue_data));
 
-                $queue = array(
-                    'queue_type' => $this->_element,
-                    'relation_id' => 'order_'.$order->order_id,
-                    'queue_data' => json_encode($queue_data),
-                    'params' => '{}',
-                    'priority' => 0,
-                    'status' => 'new',
-                    'expired' => $date,
-                    'modified_on' => $current_date
-                );
-                try{
-                    $queue_table = F0FTable::getInstance('Queue', 'J2StoreTable')->getClone();
-                    $queue_table->load(array(
-                        'relation_id' => $queue['relation_id']
-                    ));
-                    if(empty($queue_table->created_on)){
-                        $queue_table->created_on = $current_date;
+                $order_status = $model->addSales($order_queue_params);
+
+                if(!$order_status){
+                    $tz = JFactory::getConfig()->get('offset');
+                    $current_date = JFactory::getDate('now', $tz)->toSql(true);
+                    $date = JFactory::getDate('now +7 day', $tz)->toSql(true);
+
+                    $queue = array(
+                        'queue_type' => $this->_element,
+                        'relation_id' => 'order_'.$order->order_id,
+                        'queue_data' => json_encode($queue_data),
+                        'params' => '{}',
+                        'priority' => 0,
+                        'status' => 'new',
+                        'expired' => $date,
+                        'modified_on' => $current_date
+                    );
+                    try{
+                        $queue_table = F0FTable::getInstance('Queue', 'J2StoreTable')->getClone();
+                        $queue_table->load(array(
+                            'relation_id' => $queue['relation_id']
+                        ));
+                        if(empty($queue_table->created_on)){
+                            $queue_table->created_on = $current_date;
+                        }
+                        $queue_table->bind($queue);
+                        $queue_table->store();
+                        $json['success'] = 1;
+                        $order_note = JText::sprintf('J2STORE_APP_CAMPAIGNRABBIT_ORDER_ADD_TO_QUEUE',$order->order_id);
+                        $order->add_history($order_note);
+                    }catch (Exception $e){
+                        $this->_log($e->getMessage(),'Order task Exception: ');
+                        $json['error'] = $e->getMessage();
+                        $order_note_failed = JText::sprintf('J2STORE_APP_CAMPAIGNRABBIT_ORDER_ADD_TO_QUEUE_FAILED',json_encode($e->getMessage()));
+                        $order->add_history($order_note_failed);
                     }
-                    $queue_table->bind($queue);
-                    $queue_table->store();
-                    $json['success'] = 1;
-                    $order_note = JText::sprintf('J2STORE_APP_CAMPAIGNRABBIT_ORDER_ADD_TO_QUEUE',$order->order_id);
-                    $order->add_history($order_note);
-                }catch (Exception $e){
-                    $this->_log($e->getMessage(),'Order task Exception: ');
-                    $json['error'] = $e->getMessage();
-                    $order_note_failed = JText::sprintf('J2STORE_APP_CAMPAIGNRABBIT_ORDER_ADD_TO_QUEUE_FAILED',json_encode($e->getMessage()));
-                    $order->add_history($order_note_failed);
                 }
+
             }
         }
-
+        if(empty($json)){
+            $json['success'] = 1;
+        }
         echo json_encode($json);
         $app->close();
     }

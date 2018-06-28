@@ -58,37 +58,43 @@ class plgSystemCampaignrabbit extends JPlugin {
                 'billing_address_id' => 0,
                 'task' => $task
             );
+            F0FModel::addIncludePath(JPATH_SITE.'/plugins/j2store/app_campaignrabbit/app_campaignrabbit/models');
+            $model = F0FModel::getTmpInstance('AppCampaignRabbits', 'J2StoreModel');
+            $customer_queue_params = $model->getRegistryObject(json_encode($queue_data));
+            $customer_status = $model->addCustomer($customer_queue_params);
+            if(!$customer_status){
+                $tz = JFactory::getConfig()->get('offset');
+                $current_date = JFactory::getDate('now', $tz)->toSql(true);
+                $date = JFactory::getDate('now +7 day', $tz)->toSql(true);
 
-            $tz = JFactory::getConfig()->get('offset');
-            $current_date = JFactory::getDate('now', $tz)->toSql(true);
-            $date = JFactory::getDate('now +7 day', $tz)->toSql(true);
+                $queue = array(
+                    'queue_type' => 'app_campaignrabbit',
+                    'relation_id' => 'user_reg_'.$user['id'],
+                    'queue_data' => json_encode($queue_data),
+                    'params' => '{}',
+                    'priority' => 0,
+                    'status' => 'new',
+                    'expired' => $date,
+                    'modified_on' => $current_date
+                );
 
-            $queue = array(
-                'queue_type' => 'app_campaignrabbit',
-                'relation_id' => 'user_reg_'.$user['id'],
-                'queue_data' => json_encode($queue_data),
-                'params' => '{}',
-                'priority' => 0,
-                'status' => 'new',
-                'expired' => $date,
-                'modified_on' => $current_date
-            );
-
-            try{
-                F0FTable::addIncludePath(JPATH_ADMINISTRATOR.'/components/com_j2store/tables');
-                $queue_table = F0FTable::getInstance('Queue', 'J2StoreTable')->getClone();
-                $queue_table->load(array(
-                    'relation_id' => $queue['relation_id']
-                ));
-                if(empty($queue_table->created_on)){
-                    $queue_table->created_on = $current_date;
+                try{
+                    F0FTable::addIncludePath(JPATH_ADMINISTRATOR.'/components/com_j2store/tables');
+                    $queue_table = F0FTable::getInstance('Queue', 'J2StoreTable')->getClone();
+                    $queue_table->load(array(
+                        'relation_id' => $queue['relation_id']
+                    ));
+                    if(empty($queue_table->created_on)){
+                        $queue_table->created_on = $current_date;
+                    }
+                    $queue_table->bind($queue);
+                    $queue_table->store();
+                }catch (Exception $e){
+                    // do nothing
+                    $this->_log($e->getMessage(),'User Register Queue Exception: ');
                 }
-                $queue_table->bind($queue);
-                $queue_table->store();
-            }catch (Exception $e){
-                // do nothing
-                $this->_log($e->getMessage(),'User Register Queue Exception: ');
             }
+
         }
     }
 

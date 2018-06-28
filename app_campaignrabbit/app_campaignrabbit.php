@@ -167,6 +167,7 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
             $check_opt_in_status = true;
         }
         if($address_id && $check_opt_in_status) {
+
             $session->set('app_campainrabbit_order',1,'j2store');
             $user = JFactory::getUser();
             $address = F0FTable::getInstance('Address', 'J2StoreTable')->getClone();
@@ -185,34 +186,40 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
                 'billing_address_id' => $address_id,
                 'task' => $task
             );
+            $this->includeCustomModel ( 'AppCampaignRabbits' );
+            $model = F0FModel::getTmpInstance ( 'AppCampaignRabbits', 'J2StoreModel' );
+            $queue_params = $model->getRegistryObject(json_encode($queue_data));
+            $status = $model->addCustomer($queue_params);
+            if(!$status){
+                $tz = JFactory::getConfig()->get('offset');
+                $current_date = JFactory::getDate('now', $tz)->toSql(true);
+                $date = JFactory::getDate('now +7 day', $tz)->toSql(true);
 
-            $tz = JFactory::getConfig()->get('offset');
-            $current_date = JFactory::getDate('now', $tz)->toSql(true);
-            $date = JFactory::getDate('now +7 day', $tz)->toSql(true);
+                $queue = array(
+                    'queue_type' => $this->_element,
+                    'relation_id' => 'user_'.$address_id,
+                    'queue_data' => json_encode($queue_data),
+                    'params' => '{}',
+                    'priority' => 0,
+                    'status' => 'new',
+                    'expired' => $date,
+                    'modified_on' => $current_date
+                );
+                try{
 
-            $queue = array(
-                'queue_type' => $this->_element,
-                'relation_id' => 'user_'.$address_id,
-                'queue_data' => json_encode($queue_data),
-                'params' => '{}',
-                'priority' => 0,
-                'status' => 'new',
-                'expired' => $date,
-                'modified_on' => $current_date
-            );
-            try{
-                $queue_table = F0FTable::getInstance('Queue', 'J2StoreTable')->getClone();
-                $queue_table->load(array(
-                    'relation_id' => $queue['relation_id']
-                ));
-                if(empty($queue_table->created_on)){
-                    $queue_table->created_on = $current_date;
+                    $queue_table = F0FTable::getInstance('Queue', 'J2StoreTable')->getClone();
+                    $queue_table->load(array(
+                        'relation_id' => $queue['relation_id']
+                    ));
+                    if(empty($queue_table->created_on)){
+                        $queue_table->created_on = $current_date;
+                    }
+                    $queue_table->bind($queue);
+                    $queue_table->store();
+                }catch (Exception $e){
+                    // do nothing
+                    $this->_log($e->getMessage(),'User Exception: ');
                 }
-                $queue_table->bind($queue);
-                $queue_table->store();
-            }catch (Exception $e){
-                // do nothing
-                $this->_log($e->getMessage(),'User Exception: ');
             }
         }
     }
@@ -279,57 +286,18 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
             'order_id' =>$order->order_id,
             'task' => $task
         );
-
-        $tz = JFactory::getConfig()->get('offset');
-        $current_date = JFactory::getDate('now', $tz)->toSql(true);
-        $date = JFactory::getDate('now +7 day', $tz)->toSql(true);
-
-        $queue = array(
-            'queue_type' => $this->_element,
-            'relation_id' => 'order_'.$order->order_id,
-            'queue_data' => json_encode($queue_data),
-            'params' => '{}',
-            'priority' => 0,
-            'status' => 'new',
-            'expired' => $date,
-            'modified_on' => $current_date
-        );
-        try{
-            $queue_table = F0FTable::getInstance('Queue', 'J2StoreTable')->getClone();
-            $queue_table->load(array(
-                'relation_id' => $queue['relation_id']
-            ));
-            if(empty($queue_table->created_on)){
-                $queue_table->created_on = $current_date;
-            }
-            $queue_table->bind($queue);
-            $queue_table->store();
-        }catch (Exception $e){
-            $this->_log($e->getMessage(),'Order task Exception: ');
-        }
-    }
-
-    function onJ2StoreCheckoutAfterRegister(){
-        $session = JFactory::getSession();
-        $address_id = $session->get('billing_address_id', '' , 'j2store');
-        $address = F0FTable::getInstance('Address', 'J2StoreTable')->getClone();
-        if($address->load($address_id)){
-            $task = 'create_customer';
-            $queue_data = array(
-                'user_id' => $address->user_id,
-                'email' => $address->email,
-                'ship_address_id' => $address_id,
-                'billing_address_id' => $address_id,
-                'task' => $task
-            );
-
+        $this->includeCustomModel ( 'AppCampaignRabbits' );
+        $model = F0FModel::getTmpInstance ( 'AppCampaignRabbits', 'J2StoreModel' );
+        $order_queue_params = $model->getRegistryObject(json_encode($queue_data));
+        $status = $model->addSales($order_queue_params);
+        if(!$status){
             $tz = JFactory::getConfig()->get('offset');
             $current_date = JFactory::getDate('now', $tz)->toSql(true);
             $date = JFactory::getDate('now +7 day', $tz)->toSql(true);
 
             $queue = array(
                 'queue_type' => $this->_element,
-                'relation_id' => 'user_'.$address->j2store_address_id,
+                'relation_id' => 'order_'.$order->order_id,
                 'queue_data' => json_encode($queue_data),
                 'params' => '{}',
                 'priority' => 0,
@@ -348,8 +316,58 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
                 $queue_table->bind($queue);
                 $queue_table->store();
             }catch (Exception $e){
-                // do nothing
-                $this->_log($e->getMessage(),'Customer Checkout Register Exception: ');
+                $this->_log($e->getMessage(),'Order task Exception: ');
+            }
+        }
+        return '';
+    }
+
+    function onJ2StoreCheckoutAfterRegister(){
+        $session = JFactory::getSession();
+        $address_id = $session->get('billing_address_id', '' , 'j2store');
+        $address = F0FTable::getInstance('Address', 'J2StoreTable')->getClone();
+        if($address->load($address_id)){
+            $task = 'create_customer';
+            $queue_data = array(
+                'user_id' => $address->user_id,
+                'email' => $address->email,
+                'ship_address_id' => $address_id,
+                'billing_address_id' => $address_id,
+                'task' => $task
+            );
+            $this->includeCustomModel ( 'AppCampaignRabbits' );
+            $model = F0FModel::getTmpInstance ( 'AppCampaignRabbits', 'J2StoreModel' );
+            $queue_params = $model->getRegistryObject(json_encode($queue_data));
+            $status = $model->addCustomer($queue_params);
+            if(!$status){
+                $tz = JFactory::getConfig()->get('offset');
+                $current_date = JFactory::getDate('now', $tz)->toSql(true);
+                $date = JFactory::getDate('now +7 day', $tz)->toSql(true);
+
+                $queue = array(
+                    'queue_type' => $this->_element,
+                    'relation_id' => 'user_'.$address->j2store_address_id,
+                    'queue_data' => json_encode($queue_data),
+                    'params' => '{}',
+                    'priority' => 0,
+                    'status' => 'new',
+                    'expired' => $date,
+                    'modified_on' => $current_date
+                );
+                try{
+                    $queue_table = F0FTable::getInstance('Queue', 'J2StoreTable')->getClone();
+                    $queue_table->load(array(
+                        'relation_id' => $queue['relation_id']
+                    ));
+                    if(empty($queue_table->created_on)){
+                        $queue_table->created_on = $current_date;
+                    }
+                    $queue_table->bind($queue);
+                    $queue_table->store();
+                }catch (Exception $e){
+                    // do nothing
+                    $this->_log($e->getMessage(),'Customer Checkout Register Exception: ');
+                }
             }
         }
     }
@@ -365,20 +383,21 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
                 $queue_data->loadString($list->queue_data);
                 $task = $queue_data->get('task','');
                 $queue_status = false;
-
+                $this->includeCustomModel ( 'AppCampaignRabbits' );
+                $model = F0FModel::getTmpInstance ( 'AppCampaignRabbits', 'J2StoreModel' );
                 if(!empty($task)){
                     switch ($task){
                         case 'create_customer':
-                            $queue_status = $this->addCustomer($queue_data);
+                            $queue_status = $model->addCustomer($queue_data);
                             break;
                         case 'update_customer':
-                            $queue_status = $this->addCustomer($queue_data);
+                            $queue_status = $model->addCustomer($queue_data);
                             break;
                         case 'create_order':
-                            $queue_status = $this->addSales($queue_data);
+                            $queue_status = $model->addSales($queue_data);
                             break;
                         case 'update_order':
-                            $queue_status = $this->addSales($queue_data);
+                            $queue_status = $model->addSales($queue_data);
                             break;
                         default:
                             $queue_status = false;
@@ -411,299 +430,6 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
         }
         return implode('|',$final_list);
     }
-
-    /**
-     * Syncronize to Campaign Rabbit
-    */
-    public function addCustomer($queue_data){
-
-        $token = $this->params->get('api_token','');
-        if(empty($token)){
-            return false;
-        }
-
-        $app_id = $this->params->get('app_id','');
-        if(empty($app_id)){
-            return false;
-        }
-
-        $email = $queue_data->get('email', '');
-        $email = trim($email);
-        if(empty($email)) return true;
-
-        //make sure they have an order
-        /*$db = JFactory::getDbo();
-        $sql = $db->getQuery(true)->select('user_email')->from('#__j2store_orders')->where('LOWER(user_email) = '.$db->q(strtolower($email)));
-        $db->setQuery($sql);
-
-        try {
-            $result = $db->loadResult();
-            if(!$result || empty($result)) {
-                //no order found. Remove from the queue
-                return true;
-            }
-        }catch(Exception $e) {
-            return false;
-        }*/
-        
-        $address_id = $queue_data->get('billing_address_id','');
-        $user_id = $queue_data->get('user_id',0);
-
-        F0FTable::addIncludePath ( JPATH_ADMINISTRATOR . '/components/com_j2store/tables' );
-        $address = F0FTable::getInstance('Address', 'J2StoreTable')->getClone();
-
-        if(!$address->load($address_id)){
-            $address->load(array(
-                'user_id' => $user_id
-            ));
-        }
-        $user = JFactory::getUser($user_id);
-        if(empty($address->j2store_address_id)){
-            $name = $user->username;
-        }else{
-            $name = $address->first_name.' '. $address->last_name;
-        }
-
-
-        $contact_status = false;
-        try{
-            // check customer exit
-            //query-customer
-            $this->includeCustomModel ( 'AppCampaignRabbits' );
-            $model = F0FModel::getTmpInstance ( 'AppCampaignRabbits', 'J2StoreModel' );
-            $campaign_customer = $model->getCustomer($email);
-
-            $is_need_update = false;
-            if(isset($campaign_customer['body']->id)){
-                $is_need_update = true;
-            }
-
-            // customer params
-            $metas = array();
-            $metas[] = array(
-                'meta_key' => 'CUSTOMER_GROUP',
-                'meta_value' => $this->getUserGroups($user_id),
-                'meta_options' => ''
-            );
-
-            foreach ($address as $key => $value){
-                if($key == "country_id"){
-                    $country_name = $this->getCountryById($address->country_id)->country_name;
-                    $value = $country_name;
-                }elseif($key == 'zone_id'){
-                    $state = $this->getZoneById($address->zone_id)->zone_name;
-                    $value = $state;
-                }
-                $meta = array();
-                $meta['meta_key'] = $key;
-                if(is_array($value)){
-                    $value = json_encode($value);
-                }
-                $meta['meta_value'] = $value;
-                $meta['meta_options'] = '';
-                $metas[] = $meta;
-            }
-            //$name = $address->first_name.' '. $address->last_name;
-            $customer_params = array(
-                'email' => $email,
-                'created_at' => $user->registerDate,
-                'updated_at' => $user->registerDate,
-                'name' => $name,
-                'meta' => $metas,
-            );
-            if($is_need_update){
-                // update customer
-                $out_response = $model->updateCustomer($customer_params,$email);
-            }else{
-
-                // create customer
-                $out_response = $model->createCustomer($customer_params);
-
-            }
-
-            if($out_response['body']->id){
-                $this->_log(json_encode($out_response),'Customer Create/Update: ');
-                $contact_status = true;
-            }
-        }catch (Exception $e){
-            $this->_log($e->getMessage(),'Customer Exception: ');
-            $contact_status = false;
-        }
-        return $contact_status;
-    }
-
-    /**
-     * Syncronize to Sales Order
-    */
-    public function addSales($queue_data){
-        $token = $this->params->get('api_token','');
-        if(empty($token)){
-            return false;
-        }
-
-        $order_id = $queue_data->get('order_id','');
-        if(empty($order_id)){
-            return false;
-        }
-
-        $order = F0FTable::getInstance('Order', 'J2StoreTable')->getClone();
-        $order->load(array(
-            'order_id' => $order_id
-
-        ));
-
-        $zero_order = $this->params->get('synch_zero_order',1);
-        if(!$zero_order && $order->order_total <=0){
-            //remove from queue
-            return true;
-        }
-        //check orderstatus for syncronize
-        $order_status = $this->params->get('orderstatus',array(1));
-        if(!is_array($order_status)){
-            $order_status = array($order_status);
-        }
-        if(!in_array('*',$order_status)){
-            if(!in_array($order->order_state_id, $order_status)){
-                //remove from queue
-                return true;
-            }
-        }
-
-        $invoice_number = $order->getInvoiceNumber();
-        $orderinfo = $order->getOrderInformation();
-        $order_status = false;
-        $this->includeCustomModel ( 'AppCampaignRabbits' );
-        $model = F0FModel::getTmpInstance ( 'AppCampaignRabbits', 'J2StoreModel' );
-
-        // customer params
-        $metas = array();
-        foreach ($order as $key => $value){
-            $meta = array();
-            $meta['meta_key'] = $key;
-            if(is_array($value)){
-                $value = json_encode($value);
-            }
-            $meta['meta_value'] = $value;
-            $meta['meta_options'] = '';
-            $metas[] = $meta;
-        }
-        
-        $orderitems = $order->getItems();
-        $items = array();
-        foreach ($orderitems as $order_item){
-            $item = array();
-            $item['r_product_id'] = $order_item->variant_id;
-            $item['sku'] = $order_item->orderitem_sku;
-            $item['product_name'] = $order_item->orderitem_name;
-            $item['product_price'] = $order_item->orderitem_finalprice;
-            $item['item_qty'] = $order_item->orderitem_quantity;
-            $item_meta = array();
-            foreach ($order_item as $key => $value){
-                $meta = array();
-                $meta['meta_key'] = $key;
-                if(is_array($value)){
-                    $value = json_encode($value);
-                }
-                $meta['meta_value'] = $value;
-                $meta['meta_options'] = '';
-                $item_meta[] = $meta;
-            }
-            $item['meta'] = $item_meta;
-            $model->addOrUpdateProducts($order_item,$item,$order);
-
-            $items[] = $item;
-        }
-        $bill_country_name = $this->getCountryById($orderinfo->billing_country_id)->country_name;
-        $bill_state = $this->getZoneById($orderinfo->billing_zone_id)->zone_name;
-        $ship_country_name = $this->getCountryById($orderinfo->shipping_country_id)->country_name;
-        $ship_state = $this->getZoneById($orderinfo->shipping_zone_id)->zone_name;
-
-        $billing_address = array(
-            "first_name" => $orderinfo->billing_first_name,
-            "company_name" => $orderinfo->billing_company,
-            "email" => $order->user_email,
-            "mobile" => $orderinfo->billing_phone_2,
-            "address_1" => $orderinfo->billing_address_1,
-            "address_2" => $orderinfo->billing_address_2,
-            "city" => $orderinfo->billing_city,
-            "state" => $bill_state,
-            "country" => $bill_country_name,
-            "zipcode" => $orderinfo->billing_zip
-        );
-
-        $shipping_address = array(
-            "first_name" => $orderinfo->shipping_first_name,
-            "company_name" => $orderinfo->shipping_company,
-            "email" => $order->user_email,
-            "mobile" => $orderinfo->shipping_phone_2,
-            "address_1" => $orderinfo->shipping_address_1,
-            "address_2" => $orderinfo->shipping_address_2,
-            "city" => $orderinfo->shipping_city,
-            "state" => $ship_state,
-            "country" => $ship_country_name,
-            "zipcode" => $orderinfo->shipping_zip
-        );
-        $status = 'unpaid';
-        if(in_array($order->order_state_id,array(1,2))){
-            $status = 'paid';
-        }elseif($order->order_state_id == 3){
-            $status = 'failed';
-        }elseif($order->order_state_id == 4){
-            $status = 'pending';
-        }elseif($order->order_state_id == 5){
-            $status = 'unpaid';
-        }elseif($order->order_state_id == 6){
-            $status = 'cancelled';
-        }
-        //[‘unpaid’, ‘paid’, ‘pending’, ‘cancelled’, ‘failed’]
-        $order_params = array(
-            'r_order_id' => $order->order_id,
-            'r_order_ref' => $order->j2store_order_id,
-            'customer_email' => $order->user_email,
-            'customer_name' => $orderinfo->billing_first_name.' '.$orderinfo->billing_last_name,
-            'status' => $status,
-            'order_total' => $order->order_total,
-            'meta' => $metas,
-            'order_items' => $items,
-            'shipping' => $shipping_address,
-            'billing' => $billing_address,
-            'created_at' => $order->created_on,
-            'updated_at' => $order->modified_on
-        );
-        $order_status = false;
-        try{
-
-            $campaign_order = $model->getRabbitOrder($order);
-
-            $is_need_update = false;
-            if(isset($campaign_order['body']->id)){
-                $is_need_update = true;
-            }
-            if($is_need_update){
-                // update customer
-                $out_response = $model->updateRabbitOrder($order,$order_params);
-            }else{
-
-                // create customer
-                $out_response = $model->createRabbitOrder($order,$order_params);
-
-            }
-
-            if(isset($out_response['body']->id)){
-                $this->_log(json_encode($out_response),'Invoice Create/Update: ');
-                $order_status = true;
-                $order->add_history('Campaign Rabbit Order id: '.$out_response['body']->id);
-            }
-
-        }catch (Exception $e){
-            $this->_log($e->getMessage(),'Order Exception: ');
-            $order_status = false;
-            $order->add_history('Order Exception:'.$e->getMessage());
-        }
-        return $order_status;
-
-    }
-
 
     public function onJ2StoreAdminOrderAfterGeneralInformation($order_view){
         $is_enable_manuval = $this->params->get('syn_manual',0);
