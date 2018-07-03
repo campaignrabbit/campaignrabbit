@@ -588,11 +588,14 @@ class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
             $status = 'cancelled';
         }
         //[‘unpaid’, ‘paid’, ‘pending’, ‘cancelled’, ‘failed’]
+        $user = JFactory::getUser($order->user_id);
         $order_params = array(
             'r_order_id' => $order->order_id,
             'r_order_ref' => $order->j2store_order_id,
             'customer_email' => $order->user_email,
             'customer_name' => $orderinfo->billing_first_name.' '.$orderinfo->billing_last_name,
+            'customer_created_at' => $user->registerDate,
+            'customer_updated_at' => $user->registerDate,
             'status' => $status,
             'order_total' => $order->order_total,
             'meta' => $metas,

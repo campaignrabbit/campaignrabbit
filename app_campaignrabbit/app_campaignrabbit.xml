@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <extension version="3.0" type="plugin" group="j2store" method="upgrade">
     <name>Campaign Rabbit</name>
-    <version>1.0.8</version>
-    <creationDate>APR 2018</creationDate>
+    <version>1.0.9</version>
+    <creationDate>JUL 2018</creationDate>
     <author>Alagesan</author>
     <authorEmail>supports@j2store.org</authorEmail>
     <authorUrl>https://www.j2store.org</authorUrl>
