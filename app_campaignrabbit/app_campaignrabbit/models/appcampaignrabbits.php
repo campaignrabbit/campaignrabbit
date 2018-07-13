@@ -519,12 +519,13 @@ class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
         $orderitems = $order->getItems();
         $items = array();
         $config = J2store::config();
+        $tax_display_option = $config->get('checkout_price_display_options', 1);
         foreach ($orderitems as $order_item){
             $item = array();
             $item['r_product_id'] = $order_item->variant_id;
             $item['sku'] = $order_item->orderitem_sku;
             $item['product_name'] = $order_item->orderitem_name;
-            $tax_display_option = $config->get('checkout_price_display_options', 1);
+
             if($tax_display_option) {
                 $unit_price = $order_item->orderitem_finalprice_with_tax / $order_item->orderitem_quantity;
                 $item_total = $order_item->orderitem_finalprice_with_tax;
@@ -548,10 +549,71 @@ class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
                 $item_meta[] = $meta;
             }
             $item['meta'] = $item_meta;
-            $this->addOrUpdateProducts($order_item,$item,$order);
+            //$this->addOrUpdateProducts($order_item,$item,$order);
 
             $items[] = $item;
         }
+
+        if($tax_display_option == 0 ) {
+            if($order->order_tax > 0) {
+                $item = array();
+                $item['r_product_id'] = 0;
+                $item['sku'] = "TAX";
+                $item['product_name'] = JText::_('J2STORE_CART_TAX');
+                $item['product_price'] = $order->order_tax;
+                $item['item_total'] = $order->order_tax;
+                $item['item_qty'] = 1;
+                $items[] = $item;
+            }
+        }
+
+        //add discount
+        if($tax_display_option){
+            $discount_amount = $order->order_discount + $order->order_discount_tax;
+        }else{
+            $discount_amount = $order->order_discount;
+        }
+
+        if( $discount_amount > 0 ){
+            $item = array();
+            $item['r_product_id'] = 0;
+            $item['sku'] = "DISCOUNT";
+            $item['product_name'] = JText::_('J2STORE_CART_DISCOUNT');
+            $item['product_price'] = -$discount_amount;
+            $item['item_total'] = -$discount_amount;
+            $item['item_qty'] = 1;
+            $items[] = $item;
+        }
+//add fees as line item
+        foreach($order->get_fees() as $fee) {
+            if($tax_display_option) {
+                $fee_amount = $fee->amount + $fee->tax;
+            }else {
+                $fee_amount = $fee->amount;
+            }
+            $item = array();
+            $item['r_product_id'] = 0;
+            $item['sku'] = "FEE".$fee->j2store_orderfee_id;
+            $item['product_name'] = JText::_($fee->name);
+            $item['product_price'] = $fee_amount;
+            $item['item_total'] = $fee_amount;
+            $item['item_qty'] = 1;
+            $items[] = $item;
+        }
+
+        //add shipping as a line item too
+        $handling_cost = $order->order_shipping + $order->order_shipping_tax + $order->order_surcharge;
+        if($handling_cost){
+            $item = array();
+            $item['r_product_id'] = 0;
+            $item['sku'] = 'SHIPPING';
+            $item['product_name'] = JText::_('J2STORE_SHIPPING_AND_HANDLING');
+            $item['product_price'] = $handling_cost;
+            $item['item_total'] = $handling_cost;
+            $item['item_qty'] = 1;
+            $items[] = $item;
+        }
+
         $bill_country_name = $this->getCountryById($orderinfo->billing_country_id)->country_name;
         $bill_state = $this->getZoneById($orderinfo->billing_zone_id)->zone_name;
         $ship_country_name = $this->getCountryById($orderinfo->shipping_country_id)->country_name;
