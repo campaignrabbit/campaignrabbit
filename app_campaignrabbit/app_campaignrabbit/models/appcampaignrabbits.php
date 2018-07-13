@@ -518,12 +518,23 @@ class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
 
         $orderitems = $order->getItems();
         $items = array();
+        $config = J2store::config();
         foreach ($orderitems as $order_item){
             $item = array();
             $item['r_product_id'] = $order_item->variant_id;
             $item['sku'] = $order_item->orderitem_sku;
             $item['product_name'] = $order_item->orderitem_name;
-            $item['product_price'] = $order_item->orderitem_finalprice;
+            $tax_display_option = $config->get('checkout_price_display_options', 1);
+            if($tax_display_option) {
+                $unit_price = $order_item->orderitem_finalprice_with_tax / $order_item->orderitem_quantity;
+                $item_total = $order_item->orderitem_finalprice_with_tax;
+            }else {
+                $unit_price = $order_item->orderitem_finalprice_without_tax / $order_item->orderitem_quantity;
+                $item_total = $order_item->orderitem_finalprice_without_tax;
+            }
+
+            $item['product_price'] = $unit_price;
+            $item['item_total'] = $item_total;
             $item['item_qty'] = $order_item->orderitem_quantity;
             $item_meta = array();
             foreach ($order_item as $key => $value){
