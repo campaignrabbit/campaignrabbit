@@ -33,8 +33,9 @@ JHtml::_('script', 'media/j2store/js/j2store.js', false, false);
   .j2campaignrabbit-app #configurationTabs li a{
     padding: 20px 30px;
     color: #999999;
-    text-transform: uppercase;
-    font-weight: 500;
+    font-size: 15px;
+    text-transform: capitalize;
+    font-weight: 400;
     line-height: 1.6;
     -webkit-transition: color 0.2s;
     transition: color 0.2s;
@@ -51,6 +52,7 @@ JHtml::_('script', 'media/j2store/js/j2store.js', false, false);
   .j2campaignrabbit-app #configurationContent .tab-pane .control-group .control-label label{
     text-transform: capitalize;
     font-weight: 500;
+    margin-bottom: 10px;
   }
   .j2campaignrabbit-app #configurationContent .tab-pane .control-group .controls{
     margin-bottom: 10px;
@@ -58,9 +60,8 @@ JHtml::_('script', 'media/j2store/js/j2store.js', false, false);
   .j2campaignrabbit-app #configurationContent .tab-pane .control-group .controls .muted {
     color: #999;
     font-size: 12px;
-  }
-  .j2campaignrabbit-app #configurationContent .tab-pane .control-group .controls input, .j2campaignrabbit-app #configurationContent .tab-pane .control-group .controls .radio{
-    margin-bottom: 10px;
+    margin-top: 10px;
+    display: block;
   }
   .j2campaignrabbit-app #configurationContent .tab-pane .control-group .controls input[type="text"]{
     height: 32px;
@@ -98,13 +99,18 @@ JHtml::_('script', 'media/j2store/js/j2store.js', false, false);
   .j2campaignrabbit-app .btn{
     padding: 12px 20px 14px;
     line-height: 1.6;
-    font-weight: 600;
+    font-weight: 500;
     text-transform: capitalize;
     border: none;
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2), inset 0 -3px 0 rgba(0, 0, 0, 0.22);
     transition: 0.3s;
   }
-  .j2campaignrabbit-app .btn:hover, .j2campaignrabbit-app .btn:focus{
+  .j2campaignrabbit-app .btn-lg{
+    padding: 12px 40px 14px;
+    line-height: 2;
+    font-size: 16px;
+  }
+  .j2campaignrabbit-app .btn:hover{
     opacity: 0.85;
   }
   .j2campaignrabbit-app .controls .btn-group > .btn {
@@ -138,6 +144,40 @@ JHtml::_('script', 'media/j2store/js/j2store.js', false, false);
   .j2campaignrabbit-app .chzn-container-multi .chzn-choices li.search-choice{
     background: #4183D7;
     padding: 3px 10px 4px;
+  }
+  .j2campaignrabbit-app .border-left{
+    border-left: 1px solid #eee;
+  }
+  @media(max-width: 768px){
+    .j2campaignrabbit-app .border-left{
+      border-left: none;
+      border-top: 1px solid #eee;
+    }
+  }
+  .j2campaignrabbit-app .j2campaignrabbit-create-account {
+      padding: 30px 40px;
+      max-width: 500px;
+      margin: 20px auto;
+      background: #EFF4FB;
+      border-radius: 4px;
+  }
+
+  .j2campaignrabbit-app .j2campaignrabbit-create-account h3{
+    font-size: 26px;
+    line-height: 1.33;
+  }
+  .j2campaignrabbit-app .j2campaignrabbit-create-account h4{
+    font-size: 19px;
+    line-height: 1.33;
+    margin-bottom: 20px;
+    color: #555;
+  }
+  .j2campaignrabbit-app .j2campaignrabbit-create-account p{
+    font-size: 17px;
+    margin-bottom: 20px;
+    line-height: 1.6;
+    font-weight: 400;
+    color: #777;
   }
 </style>
 
@@ -187,7 +227,7 @@ JHtml::_('script', 'media/j2store/js/j2store.js', false, false);
         <?php else: ?>
 
             <div class="row-fluid">
-                <div class="span12">
+                <div class="span6">
                     <?php
                     $layout = '';
                     $style = '';
@@ -213,6 +253,21 @@ JHtml::_('script', 'media/j2store/js/j2store.js', false, false);
                     }
                     ?>
                 </div>
+                <div class="span6 border-left">
+                  <div class="j2campaignrabbit-create-account">
+                    <h3>Don't have an account?</h3>
+                    <h4>
+                      Sell more by sending targetted, data-driven emails to your customers
+                    </h4>
+                    <p>
+                      Say goodbye to generic, boring newsletters. Use the data to create personalized, effective ecommerce marketing campaigns and drive your sales
+                    </p>
+                    <p>
+                      <a href="https://app.campaignrabbit.com/register" target="_blank" class="btn btn-primary btn-lg">Get Stated for free</a>
+                    </p>
+                  </div>
+                </div>
+
             </div>
         <?php endif; ?>
             <?php
