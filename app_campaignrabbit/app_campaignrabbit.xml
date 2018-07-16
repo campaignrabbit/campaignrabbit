@@ -22,15 +22,6 @@
     <config>
         <fields name="params">
             <fieldset name="basic" label="J2STORE_CAMPAIGNRABBIT_CONNECT_SETTINGS">
-                <field name="enable_opt_in" type="radio" default="0"
-                       label="j2store_campaignrabbit_enable_opt_in"
-                       description="j2store_campaignrabbit_enable_opt_in_desc">
-                    <option value="0">J2STORE_NO</option>
-                    <option value="1">J2STORE_YES</option>
-                </field>
-                <field name="opt_in_text" type="text" class="input-large"  default="J2STORE_CAMPAIGN_OPT_IN_TEXT_DEFAULT"
-                       label="j2store_campaign_opt_in_text" description="j2store_campaign_opt_in_text_desc" />
-
                 <field name="app_id" type="text"
                        label="j2store_campaignrabbit_app_id"
                        description="j2store_campaignrabbit_app_id_desc"
@@ -45,6 +36,16 @@
             </fieldset>
 
             <fieldset name="order_settings" label="j2store_campaignrabbit_order_settings">
+
+                <field name="enable_opt_in" type="radio" default="0" class="btn-group"
+                       label="j2store_campaignrabbit_enable_opt_in"
+                       description="j2store_campaignrabbit_enable_opt_in_desc">
+                    <option value="0">J2STORE_NO</option>
+                    <option value="1">J2STORE_YES</option>
+                </field>
+                <field name="opt_in_text" type="text" class="input-large"  default="J2STORE_CAMPAIGN_OPT_IN_TEXT_DEFAULT"
+                       label="j2store_campaign_opt_in_text" description="j2store_campaign_opt_in_text_desc" />
+
 
                 <field name="synch_zero_order" type="radio" default="1" class="btn-group" label="j2store_campaignrabbit_synch_zero_order" description="j2store_campaignrabbit_synch_zero_order_desc">
                     <option value="0">J2STORE_NO</option>

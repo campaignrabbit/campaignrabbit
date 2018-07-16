@@ -23,6 +23,124 @@ JHtml::_('formbehavior.chosen', 'select');
 JHtml::_('script', 'media/j2store/js/j2store.js', false, false);
 ?>
 
+<style>
+  .j2campaignrabbit-app{
+    margin-top: 30px;
+  }
+  .j2campaignrabbit-app #configurationTabs{
+    margin-bottom: 30px;
+  }
+  .j2campaignrabbit-app #configurationTabs li a{
+    padding: 20px 30px;
+    color: #999999;
+    text-transform: uppercase;
+    font-weight: 500;
+    line-height: 1.6;
+    -webkit-transition: color 0.2s;
+    transition: color 0.2s;
+    margin: 0;
+    border-radius: 0;
+  }
+  .j2campaignrabbit-app #configurationTabs li.active a{
+    box-shadow: inset 0 3px 0 #6772e5;
+    color: #6772e5;
+  }
+  .j2campaignrabbit-app #configurationTabs li a:hover, .j2campaignrabbit-app #configurationTabs li a:focus{
+    color: #6772e5;
+  }
+  .j2campaignrabbit-app #configurationContent .tab-pane .control-group .control-label label{
+    text-transform: capitalize;
+    font-weight: 500;
+  }
+  .j2campaignrabbit-app #configurationContent .tab-pane .control-group .controls{
+    margin-bottom: 10px;
+  }
+  .j2campaignrabbit-app #configurationContent .tab-pane .control-group .controls .muted {
+    color: #999;
+    font-size: 12px;
+  }
+  .j2campaignrabbit-app #configurationContent .tab-pane .control-group .controls input, .j2campaignrabbit-app #configurationContent .tab-pane .control-group .controls .radio{
+    margin-bottom: 10px;
+  }
+  .j2campaignrabbit-app #configurationContent .tab-pane .control-group .controls input[type="text"]{
+    height: 32px;
+    width: 100%;
+    max-width: 500px;
+    font-size: 14px;
+    font-weight: 500;
+    text-indent: 10px;
+  }
+  .j2campaignrabbit-app #configurationContent .tab-pane .control-group .controls .radio{
+    position: relative;
+  }
+  @media (max-width: 40em) {
+    .j2campaignrabbit-app #configurationContent .tab-pane .control-group .controls .radio{
+      margin-top: -1.5em;
+    }
+  }
+  .j2campaignrabbit-app #configurationContent .tab-pane .control-group .controls .radio label{
+    display: inline-block;
+    padding: 12px 20px;
+    line-height: 1.6;
+    cursor: pointer;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2), inset 0 -3px 0 rgba(0, 0, 0, 0.22);
+    transition: 0.3s;
+  }
+  .j2campaignrabbit-app #configurationContent .tab-pane .control-group .controls .radio{
+    padding-left: 0;
+  }
+  .j2campaignrabbit-app #configurationContent .tab-pane .control-group .controls .radio input[type="radio"]{
+    float: none;
+    margin: auto;
+    position: absolute;
+    opacity: 0;
+  }
+  .j2campaignrabbit-app .btn{
+    padding: 12px 20px 14px;
+    line-height: 1.6;
+    font-weight: 600;
+    text-transform: capitalize;
+    border: none;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2), inset 0 -3px 0 rgba(0, 0, 0, 0.22);
+    transition: 0.3s;
+  }
+  .j2campaignrabbit-app .btn:hover, .j2campaignrabbit-app .btn:focus{
+    opacity: 0.85;
+  }
+  .j2campaignrabbit-app .controls .btn-group > .btn {
+    margin-left: 0;
+  }
+  .j2campaignrabbit-app .btn-primary{
+    background: #6772e5;
+    border-color: #6772e5;
+  }
+  .j2campaignrabbit-app .btn-success{
+    background: #2ECC71;
+    border-color: #2ECC71;
+  }
+  .j2campaignrabbit-app .btn-info{
+    background: #4183D7;
+    border-color: #4183D7;
+  }
+  .j2campaignrabbit-app .btn-danger{
+    background: #D91E18;
+    border-color: #D91E18;
+  }
+  .j2campaignrabbit-app .alert-success{
+    background: #F4FAEE;
+    border-color: #F4FAEE;
+    padding: 15px 20px;
+    color: #2ECC71;
+    display: inline-block;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .j2campaignrabbit-app .chzn-container-multi .chzn-choices li.search-choice{
+    background: #4183D7;
+    padding: 3px 10px 4px;
+  }
+</style>
+
 <script type="text/javascript">
     Joomla.submitbutton = function(pressbutton) {
         if(pressbutton == 'save' || pressbutton == 'apply') {
@@ -38,9 +156,10 @@ JHtml::_('script', 'media/j2store/js/j2store.js', false, false);
 
         Joomla.submitform('view');
     }
+    if(document.getElementById("myRadio").value)
 </script>
 
-<div class="j2store-configuration">
+<div class="j2store-configuration j2campaignrabbit-app">
     <form action="<?php echo $vars->action; ?>" method="post" name="adminForm" id="adminForm" class="form-horizontal form-validate">
         <?php echo J2Html::hidden('option','com_j2store');?>
         <?php echo J2Html::hidden('view','apps');?>
@@ -82,7 +201,8 @@ JHtml::_('script', 'media/j2store/js/j2store.js', false, false);
                             <?php if(J2Store::isPro() != 1 && $pro ==1 ): ?>
                                 <?php echo J2Html::pro(); ?>
                             <?php else: ?>
-                            <div class="controls"><?php echo $field->input; ?>
+                            <div class="controls">
+                                <?php echo $field->input; ?>
                                 <br />
                                 <small class="muted"><?php echo JText::_($field->description); ?></small>
                                 <?php endif; ?>
