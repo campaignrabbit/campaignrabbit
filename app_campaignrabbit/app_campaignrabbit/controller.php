@@ -37,7 +37,7 @@ class J2StoreControllerAppCampaignRabbit extends J2StoreAppController
 
         $json = array();
         if(isset($out_response['body']->error) && !empty($out_response['body']->error)){
-            $json['error'] = $out_response['body']->message . ' - '. $out_response['body']->error;
+            $json['error'] = $out_response['body']->error;
         }elseif(isset($out_response['body']->success) && !empty($out_response['body']->success)){
             $json['success'] = $out_response['body']->message;
         }else{
