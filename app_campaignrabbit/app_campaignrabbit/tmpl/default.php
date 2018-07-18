@@ -196,7 +196,6 @@ JHtml::_('script', 'media/j2store/js/j2store.js', false, false);
 
         Joomla.submitform('view');
     }
-    if(document.getElementById("myRadio").value)
 </script>
 
 <div class="j2store-configuration j2campaignrabbit-app">

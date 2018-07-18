@@ -13,7 +13,6 @@
     <files>
         <filename plugin="app_campaignrabbit">app_campaignrabbit.php</filename>
         <folder>app_campaignrabbit</folder>
-        <folder>library</folder>
         <filename>index.html</filename>
     </files>
     <languages>
