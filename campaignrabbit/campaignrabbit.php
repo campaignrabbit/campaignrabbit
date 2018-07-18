@@ -41,7 +41,7 @@ class plgSystemCampaignrabbit extends JPlugin {
             $params->loadString($plugin_data->params);
             $app_id = $params->get('app_id','');
             $document = JFactory::getDocument();
-            $script_content = 'window.app_url = "https://app.campaignrabbit.com/";window.app_id = "'.$app_id.'";window.ancs_url = "https://hook.campaignrabbit.com/v1/pixel.gif";
+            $script_content = 'window.app_id = "'.$app_id.'";
                 !function(e,t,n,p,o,a,i,s,c){e[o]||(i=e[o]=function(){i.process?i.process.apply(i,arguments):i.queue.push(arguments)},i.queue=[],i.t=1*new Date,s=t.createElement(n),s.async=1,s.src=p+"?t="+Math.ceil(new Date/a)*a,c=t.getElementsByTagName(n)[0],c.parentNode.insertBefore(s,c))}(window,document,"script","https://cdn.campaignrabbit.com/campaignrabbit.analytics.js","rabbit",1),rabbit("init",window.app_id),rabbit("event","pageload");';
             $document->addScriptDeclaration($script_content);
         }
