@@ -6,4 +6,5 @@ vendor/
 packages/
 .idea
 .idea/
+.idea/vcs.xml
 .DS_STORE
