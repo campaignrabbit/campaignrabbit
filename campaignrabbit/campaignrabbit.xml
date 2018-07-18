@@ -1,16 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
-<extension version="2.5" type="plugin" group="system" method="upgrade">
-    <name>System - Campaign Rabbit</name>
-    <author>Alagesan</author>
+<extension type="library" version="2.5" method="upgrade">
+    <name>Campaignrabbit</name>
+    <version>1.0.0</version>
     <creationDate>JUL 2018</creationDate>
-    <copyright>(C) 2018 J2Store</copyright>
-    <license>http://www.gnu.org/copyleft/lgpl.html GNU/LGPL</license>
+    <libraryname>campaignrabbit</libraryname>
+    <author>Alagesan</author>
     <authorEmail>support@j2store.org</authorEmail>
     <authorUrl>https://www.j2store.org</authorUrl>
-    <version>1.0.12</version>
-    <description>System plugin that loads Campaign Rabbit analysis script.</description>
+    <copyright>2018 J2Store</copyright>
+    <license>GNU General Public License v3 or later versions</license>
+    <description>This library used to connect with Campaignrabbit</description>
+    <scriptfile>script.lib_campaignrabbit.php</scriptfile>
     <files>
-        <filename plugin="campaignrabbit">campaignrabbit.php</filename>
+        <folder>vendor</folder>
+        <filename>.htaccess</filename>
+        <filename>web.config</filename>
         <filename>index.html</filename>
     </files>
 </extension>

@@ -13,5 +13,6 @@
     <files folder="packages">
         <file type="plugin" id="app_campaignrabbit" group="j2store">plg_j2store_app_campaignrabbit.zip</file>
         <file type="system" id="system_campaignrabbit" >plg_system_campaignrabbit.zip</file>
+        <file type="library" id="library_campaignrabbit" >lib_campaignrabbit.zip</file>
     </files>
 </extension>
