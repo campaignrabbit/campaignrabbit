@@ -10,10 +10,10 @@
             "email": "rvprashanthi@gmail.com"
         }
     ],
-    "minimum-stability": "dev",
+    "minimum-stability": "stable",
 
     "require": {
-        "guzzlehttp/guzzle": "dev-master"
+        "guzzlehttp/guzzle": ">=6.3"
     },
 
 
