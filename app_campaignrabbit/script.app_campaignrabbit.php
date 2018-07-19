@@ -83,6 +83,13 @@ class plgJ2StoreApp_campaignrabbitInstallerScript {
             }
         }
 
+        $src = $parent->getParent()->getPath('source');
+        $path = "$src/library/campaignrabbit";
+        if(is_dir($path)){
+            $installer = new JInstaller;
+            $installer->install($path);
+        }
+
         return true;
     }
 

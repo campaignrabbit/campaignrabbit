@@ -559,7 +559,7 @@ class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
                 $item = array();
                 $item['r_product_id'] = 0;
                 $item['sku'] = "TAX";
-                $item['product_name'] = JText::_('J2STORE_CART_TAX');
+                $item['product_name'] = JText::_('J2STORE_CART_TAX_INCLUDED');
                 $item['product_price'] = $order->order_tax;
                 $item['item_total'] = $order->order_tax;
                 $item['item_qty'] = 1;

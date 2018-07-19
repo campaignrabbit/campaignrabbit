@@ -4,7 +4,7 @@
     <author>Alagesan</author>
     <creationDate>JUL 2018</creationDate>
     <packagename>CampaignRabbit</packagename>
-    <version>1.0.13</version>
+    <version>1.0.14</version>
     <url>https://www.j2store.org</url>
     <packager>Alagesan</packager>
     <packagerurl>https://www.j2store.org</packagerurl>
@@ -13,6 +13,5 @@
     <files folder="packages">
         <file type="plugin" id="app_campaignrabbit" group="j2store">plg_j2store_app_campaignrabbit.zip</file>
         <file type="system" id="system_campaignrabbit" >plg_system_campaignrabbit.zip</file>
-        <file type="library" id="library_campaignrabbit" >lib_campaignrabbit.zip</file>
     </files>
 </extension>
