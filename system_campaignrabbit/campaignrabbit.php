@@ -34,8 +34,9 @@ if (!JComponentHelper::isEnabled('com_j2store', true))
 
 class plgSystemCampaignrabbit extends JPlugin {
     function onAfterRoute() {
+        $app = JFactory::getApplication();
         //chk app campaign enabled
-        if(JPluginHelper::isEnabled('j2store', 'app_campaignrabbit')){
+        if(JPluginHelper::isEnabled('j2store', 'app_campaignrabbit') && $app->isSite()){
             $plugin_data = JPluginHelper::getPlugin('j2store', 'app_campaignrabbit');
             $params = new \JRegistry;
             $params->loadString($plugin_data->params);
@@ -48,8 +49,8 @@ class plgSystemCampaignrabbit extends JPlugin {
     }
 
     function onUserAfterSave($user,$isnew,$success,$msg){
-
-        if($isnew && JPluginHelper::isEnabled('j2store', 'app_campaignrabbit')){
+        $app = JFactory::getApplication();
+        if($isnew && JPluginHelper::isEnabled('j2store', 'app_campaignrabbit') && $app->isSite()){
             $task = 'create_customer';
             $queue_data = array(
                 'user_id' => $user['id'],
