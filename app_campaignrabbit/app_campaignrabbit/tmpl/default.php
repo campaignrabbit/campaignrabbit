@@ -262,7 +262,7 @@ JHtml::_('script', 'media/j2store/js/j2store.js', false, false);
                       Say goodbye to generic, boring newsletters. Use the data to create personalized, effective ecommerce marketing campaigns and drive your sales
                     </p>
                     <p>
-                      <a href="https://app.campaignrabbit.com/register" target="_blank" class="btn btn-primary btn-lg">Get Stated for free</a>
+                      <a href="https://app.campaignrabbit.com/register?utm_campaign=integration&utm_source=j2store&utm_content=register&utm_medium=web" target="_blank" class="btn btn-primary btn-lg">Get Stated for free</a>
                     </p>
                   </div>
                 </div>

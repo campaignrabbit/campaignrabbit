@@ -265,7 +265,7 @@ class J2StoreControllerAppCampaignRabbit extends J2StoreAppController
         if(!empty($lists)) {
             foreach ($lists as $order) {
                 //check orderstatus for syncronize
-                $order_status = $params->get('orderstatus',array(1));
+                $order_status = $params->get('orderstatus',array('*'));
                 if(!is_array($order_status)){
                     $order_status = array($order_status);
                 }

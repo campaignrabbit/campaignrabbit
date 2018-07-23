@@ -247,13 +247,26 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
         }
     }
 
+    /**
+     *
+    */
+    function onJ2StoreAfterCreateNewOrder($order){
+        return $this->orderSyn($order);
+    }
 
     /**
      * Add Order details to Queue Table
     */
     function onJ2StoreAfterOrderstatusUpdate($order,$new_status){
+        return $this->orderSyn($order);
+    }
+
+    /**
+     * Add Order details to Queue Table
+     */
+    function orderSyn($order){
         //check orderstatus for syncronize
-        $order_status = $this->params->get('orderstatus',array(1));
+        $order_status = $this->params->get('orderstatus',array('*'));
         if(!is_array($order_status)){
             $order_status = array($order_status);
         }
@@ -436,7 +449,7 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
         $order = $order_view->order;
         $html = '';
         //check orderstatus for syncronize
-        $order_status = $this->params->get('orderstatus',array(1));
+        $order_status = $this->params->get('orderstatus',array('*'));
         if(!is_array($order_status)){
             $order_status = array($order_status);
         }

@@ -65,7 +65,7 @@ class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
         if(!$zero_order){
             $query->where('#__j2store_orders.order_total > 0');
         }
-        $order_status = $plugin_params->get('orderstatus',array(1));
+        $order_status = $plugin_params->get('orderstatus',array('*'));
         if(!is_array($order_status)){
             $order_status = array($order_status);
         }
@@ -486,7 +486,7 @@ class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
             return true;
         }
         //check orderstatus for syncronize
-        $order_status = $params->get('orderstatus',array(1));
+        $order_status = $params->get('orderstatus',array('*'));
         if(!is_array($order_status)){
             $order_status = array($order_status);
         }
