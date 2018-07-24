@@ -521,9 +521,13 @@ class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
         $config = J2store::config();
         $tax_display_option = $config->get('checkout_price_display_options', 1);
         foreach ($orderitems as $order_item){
+            $sku = str_replace(' ','_',$order_item->orderitem_sku);
+            if(empty($sku)){
+                $sku = $order_item->variant_id;
+            }
             $item = array();
             $item['r_product_id'] = $order_item->variant_id;
-            $item['sku'] = $order_item->orderitem_sku;
+            $item['sku'] = $sku;
             $item['product_name'] = $order_item->orderitem_name;
 
             if($tax_display_option) {
