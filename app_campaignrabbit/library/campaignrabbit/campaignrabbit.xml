@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <extension type="library" version="2.5" method="upgrade">
     <name>Campaignrabbit</name>
-    <version>1.0.16</version>
+    <version>1.0.17</version>
     <creationDate>JUL 2018</creationDate>
     <libraryname>campaignrabbit</libraryname>
     <author>Alagesan</author>
