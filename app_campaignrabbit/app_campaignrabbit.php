@@ -77,15 +77,32 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
         $form = $model->getForm ( $newdata );
         $vars->form = $form;
         $vars->action = "index.php?option=com_j2store&view=app&task=view&id={$id}";
-        $vars->status = $model->checkInitCondition();
+        $vars->status = $this->checkPHPVersion();
         $html = $this->_getLayout ( 'default', $vars );
         return $html;
     }
 
+    public function checkPHPVersion(){
+        if (defined('PHP_VERSION'))
+        {
+            $version = PHP_VERSION;
+        }
+        elseif (function_exists('phpversion'))
+        {
+            $version = phpversion();
+        }else{
+            $version = '5.3.0';
+        }
+        $status = true;
+        if (!version_compare($version, '5.5.0', 'ge'))
+        {
+            $status = false;
+        }
+        return $status;
+    }
+
     public function onJ2StoreAfterDisplayShippingPayment($order){
-        $this->includeCustomModel ( 'AppCampaignRabbits' );
-        $model = F0FModel::getTmpInstance ( 'AppCampaignRabbits', 'J2StoreModel' );
-        $status = $model->checkInitCondition();
+        $status = $this->checkPHPVersion();
         $html = '';
         if($status){
             $html = $this->displayOptIn('payment');
@@ -106,9 +123,7 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
     }
 
     public function onJ2StoreCheckoutValidateShippingPayment($values, $order){
-        $this->includeCustomModel ( 'AppCampaignRabbits' );
-        $model = F0FModel::getTmpInstance ( 'AppCampaignRabbits', 'J2StoreModel' );
-        $status = $model->checkInitCondition();
+        $status = $this->checkPHPVersion();
         $html = '';
         if(!$status){
             return $html;
@@ -182,9 +197,8 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
     }
 
     public function onJ2StorePrePayment($orderpayment_type, $data){
-        $this->includeCustomModel ( 'AppCampaignRabbits' );
-        $model = F0FModel::getTmpInstance ( 'AppCampaignRabbits', 'J2StoreModel' );
-        $status = $model->checkInitCondition();
+
+        $status = $this->checkPHPVersion();
         $html = '';
         if(!$status){
             return $html;
@@ -213,14 +227,14 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
 
     /**
      *
-    */
+     */
     function onJ2StoreAfterCreateNewOrder($order){
         return $this->orderSyn($order);
     }
 
     /**
      * Add Order details to Queue Table
-    */
+     */
     function onJ2StoreAfterOrderstatusUpdate($order,$new_status){
         return $this->orderSyn($order);
     }
@@ -229,9 +243,7 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
      * Add Order details to Queue Table
      */
     function orderSyn($order){
-        $this->includeCustomModel ( 'AppCampaignRabbits' );
-        $model = F0FModel::getTmpInstance ( 'AppCampaignRabbits', 'J2StoreModel' );
-        $status = $model->checkInitCondition();
+        $status = $this->checkPHPVersion();
         $html = '';
         if(!$status){
             return $html;
@@ -307,9 +319,7 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
     }
 
     function onJ2StoreCheckoutAfterRegister(){
-        $this->includeCustomModel ( 'AppCampaignRabbits' );
-        $model = F0FModel::getTmpInstance ( 'AppCampaignRabbits', 'J2StoreModel' );
-        $status = $model->checkInitCondition();
+        $status = $this->checkPHPVersion();
         $html = '';
         if(!$status){
             return $html;
@@ -326,7 +336,8 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
                 'billing_address_id' => $address_id,
                 'task' => $task
             );
-
+            $this->includeCustomModel ( 'AppCampaignRabbits' );
+            $model = F0FModel::getTmpInstance ( 'AppCampaignRabbits', 'J2StoreModel' );
             $queue_params = $model->getRegistryObject(json_encode($queue_data));
             $status = $model->addCustomer($queue_params);
             if(!$status){
@@ -364,15 +375,15 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
 
     /**
      * Process Queue
-    */
+     */
     public function onJ2StoreProcessQueue($list){
-        $this->includeCustomModel ( 'AppCampaignRabbits' );
-        $model = F0FModel::getTmpInstance ( 'AppCampaignRabbits', 'J2StoreModel' );
-        $status = $model->checkInitCondition();
+
+        $status = $this->checkPHPVersion();
         $html = '';
         if(!$status){
             return $html;
         }
+
         if(isset($list->queue_type) && $list->queue_type == $this->_element){
             if(isset($list->queue_data) && !empty($list->queue_data)){
                 $queue_helper = J2Store::queue();
@@ -380,6 +391,8 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
                 $queue_data->loadString($list->queue_data);
                 $task = $queue_data->get('task','');
                 $queue_status = false;
+                $this->includeCustomModel ( 'AppCampaignRabbits' );
+                $model = F0FModel::getTmpInstance ( 'AppCampaignRabbits', 'J2StoreModel' );
                 if(!empty($task)){
                     switch ($task){
                         case 'create_customer':
@@ -427,9 +440,7 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
     }
 
     public function onJ2StoreAdminOrderAfterGeneralInformation($order_view){
-        $this->includeCustomModel ( 'AppCampaignRabbits' );
-        $model = F0FModel::getTmpInstance ( 'AppCampaignRabbits', 'J2StoreModel' );
-        $status = $model->checkInitCondition();
+        $status = $this->checkPHPVersion();
         $html = '';
         if(!$status){
             return $html;
