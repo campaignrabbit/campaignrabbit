@@ -14,10 +14,30 @@
  * */
 defined('_JEXEC') or die('Restricted access');
 require_once (JPATH_ADMINISTRATOR . '/components/com_j2store/library/appmodel.php');
-require_once(JPATH_LIBRARIES.'/campaignrabbit/vendor/autoload.php');
+require_once(JPATH_SITE.'/plugins/j2store/app_campaignrabbit/library/campaignrabbit/vendor/autoload.php');
 class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
 {
     public $_element = 'app_campaignrabbit';
+
+
+    public function checkInitCondition(){
+        if (defined('PHP_VERSION'))
+        {
+            $version = PHP_VERSION;
+        }
+        elseif (function_exists('phpversion'))
+        {
+            $version = phpversion();
+        }else{
+            $version = '5.3.0';
+        }
+        $status = true;
+        if (!version_compare($version, '5.5.0', 'ge'))
+        {
+            $status = false;
+        }
+        return $status;
+    }
 
     public function getPluginParams(){
         $plugin = JPluginHelper::getPlugin('j2store', $this->_element);

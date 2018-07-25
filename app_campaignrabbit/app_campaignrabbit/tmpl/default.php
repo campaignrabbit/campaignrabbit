@@ -22,7 +22,7 @@ JHtml::_('formbehavior.chosen', 'select');
 
 JHtml::_('script', 'media/j2store/js/j2store.js', false, false);
 ?>
-
+<?php if($vars->status): ?>
 <style>
   .j2campaignrabbit-app{
     margin-top: 30px;
@@ -277,3 +277,11 @@ JHtml::_('script', 'media/j2store/js/j2store.js', false, false);
         ?>
     </form>
 </div>
+<?php else: ?>
+    <div class="alert alert-danger">
+        <div>Message:</div>
+        <div class="alert-message">
+            <?php echo JText::_('J2STORE_PHP_VERSION_NOT_SUPPORT');?>
+        </div>
+    </div>
+<?php endif; ?>
