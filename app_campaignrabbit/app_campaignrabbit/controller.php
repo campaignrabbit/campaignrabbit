@@ -34,15 +34,20 @@ class J2StoreControllerAppCampaignRabbit extends J2StoreAppController
     public function checkToken(){
         $model = F0FModel::getTmpInstance('AppCampaignRabbits', 'J2StoreModel');
         $out_response = $model->auth();
-
         $json = array();
+        $params = $model->getPluginParams();
         if(isset($out_response['body']->error) && !empty($out_response['body']->error)){
             $json['error'] = $out_response['body']->error;
+            $params->set('is_verified',0);
         }elseif(isset($out_response['body']->success) && !empty($out_response['body']->success)){
             $json['success'] = $out_response['body']->message;
+            //save params with yes
+            $params->set('is_verified',1);
         }else{
+            $params->set('is_verified',0);
             $json['error'] = JText::_('J2STORE_CAMPAIGNRABBIT_AUTH_RESPONSE_NOT_FOUND');
         }
+        $model->saveParams($params);
         echo json_encode($json);
         exit;
     }

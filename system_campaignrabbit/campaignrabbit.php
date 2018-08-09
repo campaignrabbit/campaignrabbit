@@ -41,10 +41,13 @@ class plgSystemCampaignrabbit extends JPlugin {
             $params = new \JRegistry;
             $params->loadString($plugin_data->params);
             $app_id = $params->get('app_id','');
+            $is_verified = $params->get('is_verified',0);
             $document = JFactory::getDocument();
-            $script_content = 'window.app_id = "'.$app_id.'";
+            if(!empty($app_id) && $is_verified){
+                $script_content = 'window.app_id = "'.$app_id.'";
                 !function(e,t,n,p,o,a,i,s,c){e[o]||(i=e[o]=function(){i.process?i.process.apply(i,arguments):i.queue.push(arguments)},i.queue=[],i.t=1*new Date,s=t.createElement(n),s.async=1,s.src=p+"?t="+Math.ceil(new Date/a)*a,c=t.getElementsByTagName(n)[0],c.parentNode.insertBefore(s,c))}(window,document,"script","https://cdn.campaignrabbit.com/campaignrabbit.analytics.js","rabbit",1),rabbit("init",window.app_id),rabbit("event","pageload");';
-            $document->addScriptDeclaration($script_content);
+                $document->addScriptDeclaration($script_content);
+            }
         }
     }
 

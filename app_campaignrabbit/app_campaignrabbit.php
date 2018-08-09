@@ -227,14 +227,14 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
 
     /**
      *
-     */
+    */
     function onJ2StoreAfterCreateNewOrder($order){
         return $this->orderSyn($order);
     }
 
     /**
      * Add Order details to Queue Table
-     */
+    */
     function onJ2StoreAfterOrderstatusUpdate($order,$new_status){
         return $this->orderSyn($order);
     }
@@ -375,7 +375,7 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
 
     /**
      * Process Queue
-     */
+    */
     public function onJ2StoreProcessQueue($list){
 
         $status = $this->checkPHPVersion();
