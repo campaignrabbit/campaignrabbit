@@ -33,27 +33,38 @@ if (!JComponentHelper::isEnabled('com_j2store', true))
 
 
 class plgSystemCampaignrabbit extends JPlugin {
-    function onAfterRoute() {
+
+    public function canRun(){
         $app = JFactory::getApplication();
+        $run_status = false;
         //chk app campaign enabled
-        if(JPluginHelper::isEnabled('j2store', 'app_campaignrabbit') && $app->isSite()){
+        if(JPluginHelper::isEnabled('j2store', 'app_campaignrabbit') && $app->isSite()) {
             $plugin_data = JPluginHelper::getPlugin('j2store', 'app_campaignrabbit');
             $params = new \JRegistry;
             $params->loadString($plugin_data->params);
-            $app_id = $params->get('app_id','');
-            $is_verified = $params->get('is_verified',0);
-            $document = JFactory::getDocument();
+            $app_id = $params->get('app_id', '');
+            $is_verified = $params->get('is_verified', 0);
             if(!empty($app_id) && $is_verified){
-                $script_content = 'window.app_id = "'.$app_id.'";
-                !function(e,t,n,p,o,a,i,s,c){e[o]||(i=e[o]=function(){i.process?i.process.apply(i,arguments):i.queue.push(arguments)},i.queue=[],i.t=1*new Date,s=t.createElement(n),s.async=1,s.src=p+"?t="+Math.ceil(new Date/a)*a,c=t.getElementsByTagName(n)[0],c.parentNode.insertBefore(s,c))}(window,document,"script","https://cdn.campaignrabbit.com/campaignrabbit.analytics.js","rabbit",1),rabbit("init",window.app_id),rabbit("event","pageload");';
-                $document->addScriptDeclaration($script_content);
+                $run_status = true;
             }
+        }
+        return $run_status;
+    }
+    function onAfterRoute() {
+        if($this->canRun()){
+            $document = JFactory::getDocument();
+            $plugin_data = JPluginHelper::getPlugin('j2store', 'app_campaignrabbit');
+            $params = new \JRegistry;
+            $params->loadString($plugin_data->params);
+            $app_id = $params->get('app_id', '');
+            $script_content = 'window.app_id = "'.$app_id.'";
+                !function(e,t,n,p,o,a,i,s,c){e[o]||(i=e[o]=function(){i.process?i.process.apply(i,arguments):i.queue.push(arguments)},i.queue=[],i.t=1*new Date,s=t.createElement(n),s.async=1,s.src=p+"?t="+Math.ceil(new Date/a)*a,c=t.getElementsByTagName(n)[0],c.parentNode.insertBefore(s,c))}(window,document,"script","https://cdn.campaignrabbit.com/campaignrabbit.analytics.js","rabbit",1),rabbit("init",window.app_id),rabbit("event","pageload");';
+            $document->addScriptDeclaration($script_content);
         }
     }
 
     function onUserAfterSave($user,$isnew,$success,$msg){
-        $app = JFactory::getApplication();
-        if($isnew && JPluginHelper::isEnabled('j2store', 'app_campaignrabbit') && $app->isSite()){
+        if($isnew && $this->canRun()){
             $task = 'create_customer';
             $queue_data = array(
                 'user_id' => $user['id'],
@@ -98,7 +109,6 @@ class plgSystemCampaignrabbit extends JPlugin {
                     $this->_log($e->getMessage(),'User Register Queue Exception: ');
                 }
             }
-
         }
     }
 
