@@ -114,7 +114,8 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
         $html = '';
         $opt_in_postion = $this->params->get('opt_in_position','payment');
         $enable_opt_in = $this->params->get('enable_opt_in',0);
-        if(($opt_in_postion == $opt_in_type) && $enable_opt_in){
+        $enable_double_opt_in = $this->params->get('enable_double_opt_in',0);
+        if(($opt_in_postion == $opt_in_type) && ($enable_opt_in || $enable_double_opt_in)){
             $vars = new JObject();
             $vars->params = $this->params;
             $html = $this->_getLayout('optin_check', $vars);
@@ -133,9 +134,10 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
         $session->set('app_campainrabbit_order',0,'j2store');
         $check_opt_in_status = false;
         $opt_in = $this->params->get('enable_opt_in',0);
-        if(!$opt_in){
+        $enable_double_opt_in = $this->params->get('enable_double_opt_in',0);
+        if(!$opt_in && !$enable_double_opt_in){
             $check_opt_in_status = true;
-        }elseif($opt_in && isset($values['app_camp_rabbit_opt_in']) && $values['app_camp_rabbit_opt_in']){
+        }elseif(($opt_in || $enable_double_opt_in) && isset($values['app_camp_rabbit_opt_in']) && $values['app_camp_rabbit_opt_in']){
             $check_opt_in_status = true;
         }
         if($address_id && $check_opt_in_status) {
@@ -242,7 +244,7 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
     /**
      * Add Order details to Queue Table
      */
-    function orderSyn($order){
+    function orderSyn($order,$force = false){
         $status = $this->checkPHPVersion();
         $html = '';
         if(!$status){
@@ -263,13 +265,26 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
         $order_params = $this->getRegistryObject($order->order_params);
         $order_campaign_status = $order_params->get('app_campainrabbit_order',0);
         $opt_in = $this->params->get('enable_opt_in',0);
+        $enable_double_opt_in = $this->params->get('enable_double_opt_in',0);
         $check_opt_in_status = false;
-        if(!$opt_in){
+        if(!$opt_in && !$enable_double_opt_in){ // check opt-in and double opt-in also disable
             $check_opt_in_status = true;
-        }elseif($opt_in && $order_campaign_status){
+        }elseif(($opt_in || $enable_double_opt_in) && $order_campaign_status){ // any one opt-in enabled, user allow to synchronize order.
             $check_opt_in_status = true;
         }
-        if(!$check_opt_in_status){
+        if(!$check_opt_in_status && $force){ // synchronize status failed but force synchronize
+            $check_opt_in_status = true;
+        }
+        if(!$check_opt_in_status){ //return synchronize status failed
+            return '';
+        }
+
+        if(!$enable_double_opt_in && $force){ // not enable double opt-in, when force - no need to allow any operation
+            return '';
+        }
+        if($enable_double_opt_in && !$force){ // enabled double opt-in and not force synchronize - need to send email with order synchronize url.
+            // send email
+            $this->sendEmail($order);
             return '';
         }
 
@@ -474,6 +489,47 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
         return $html;
     }
 
+    public function sendEmail($order){
+        //get the config class obj
+        $config = JFactory::getConfig();
+        //get the mailer class object
+        $mailer = JFactory::getMailer();
+        $mailfrom = $config->get('mailfrom');
+        $fromname = $config->get('fromname');
+        $sitename = $config->get('sitename');
+        $mailer->addRecipient($order->user_email);
+        $cron_key = J2Store::config ()->get ( 'queue_key','' );
+        $url = rtrim(JUri::base(false),'/').'/index.php?option=com_j2store&view=crons&task=cron&cron_secret='.$cron_key.'&command=campaign_double_opt&order_id='.$order->order_id;
+        $subject = JText::sprintf('J2STORE_CAMPAIGN_RABBIT_SUBJECT',$sitename,$order->order_id);
+        $body = JText::sprintf('J2STORE_CAMPAIGN_RABBIT_BODY',$url);
+        $mailer->setSubject($subject );
+        $mailer->setBody($body);
+        $mailer->IsHTML(1);
+        $mailer->setSender(array( $mailfrom, $fromname ));
+        if(!$mailer->send()){
+            $msg = JText::_('PLG_J2STORE_EMAILBASKET_SENDING_FAILED');
+            $this->_log($msg);
+            $order->add_history($msg);
+        }else{
+            $msg = JText::_('PLG_J2STORE_EMAILBASKET_SENDING_SUCCESS');
+            $order->add_history($msg);
+        }
+    }
+
+    public function onJ2StoreProcessCron($command){
+        if($command == 'campaign_double_opt'){
+            $app = JFactory::getApplication();
+            $order_id = $app->input->getString('order_id','');
+            $order_table = F0FTable::getInstance('Order', 'J2StoreTable')->getClone();
+            $order_table->load(array(
+                'order_id' => $order_id
+            ));
+
+            if(!empty($order_table->order_id) && $order_table->order_id == $order_id ) {
+                $this->orderSyn($order_table, true);
+            }
+        }
+    }
 
     /**
      * Simple logger
