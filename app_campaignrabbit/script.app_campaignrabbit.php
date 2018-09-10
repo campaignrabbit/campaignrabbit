@@ -52,7 +52,14 @@ class plgJ2StoreApp_campaignrabbitInstallerScript {
                 $this->_executeQuery ( $query );
             }
         }
-
+        //campaign_double_opt_in
+        if (in_array ( $prefix . 'j2store_orders', $tables )) {
+            $fields = $db->getTableColumns ( '#__j2store_orders' );
+            if (! array_key_exists ( 'campaign_double_opt_in', $fields )) {
+                $query = "ALTER TABLE #__j2store_orders ADD `campaign_double_opt_in` INT(3) NOT NULL;";
+                $this->_executeQuery ( $query );
+            }
+        }
         return true;
     }
 

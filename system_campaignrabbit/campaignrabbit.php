@@ -68,6 +68,23 @@ class plgSystemCampaignrabbit extends JPlugin {
                 !function(e,t,n,p,o,a,i,s,c){e[o]||(i=e[o]=function(){i.process?i.process.apply(i,arguments):i.queue.push(arguments)},i.queue=[],i.t=1*new Date,s=t.createElement(n),s.async=1,s.src=p+"?t="+Math.ceil(new Date/a)*a,c=t.getElementsByTagName(n)[0],c.parentNode.insertBefore(s,c))}(window,document,"script","https://cdn.campaignrabbit.com/campaignrabbit.analytics.js","rabbit",1),rabbit("init",window.app_id),rabbit("event","pageload");';
             $document->addScriptDeclaration($script_content);
         }
+        $app = JFactory::getApplication();
+        $option = $app->input->get('option','');
+        $command = $app->input->get('command','');
+        if($option == 'com_j2store' && $command == 'campaign_double_opt'){
+            $order_id = $app->input->getString('order_id','');
+            F0FTable::addIncludePath(JPATH_ADMINISTRATOR.'/components/com_j2store/tables');
+            $order_table = F0FTable::getInstance('Order', 'J2StoreTable')->getClone();
+            $order_table->load(array(
+                'order_id' => $order_id
+            ));
+
+            F0FModel::addIncludePath(JPATH_SITE.'/plugins/j2store/app_campaignrabbit/app_campaignrabbit/models');
+            $model = F0FModel::getTmpInstance('AppCampaignRabbits', 'J2StoreModel');
+            if(!empty($order_table->order_id) && $order_table->order_id == $order_id ) {
+                $model->orderSyn($order_table, true);
+            }
+        }
     }
 
     function onUserAfterSave($user,$isnew,$success,$msg){

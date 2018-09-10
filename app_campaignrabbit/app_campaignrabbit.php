@@ -229,109 +229,23 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
 
     /**
      *
-    */
+     */
     function onJ2StoreAfterCreateNewOrder($order){
-        return $this->orderSyn($order);
-    }
-
-    /**
-     * Add Order details to Queue Table
-    */
-    function onJ2StoreAfterOrderstatusUpdate($order,$new_status){
-        return $this->orderSyn($order);
+        F0FModel::addIncludePath(JPATH_SITE.'/plugins/j2store/app_campaignrabbit/app_campaignrabbit/models');
+        $model = F0FModel::getTmpInstance('AppCampaignRabbits', 'J2StoreModel');
+        return $model->orderSyn($order);
     }
 
     /**
      * Add Order details to Queue Table
      */
-    function orderSyn($order,$force = false){
-        $status = $this->checkPHPVersion();
-        $html = '';
-        if(!$status){
-            return $html;
-        }
-        //check orderstatus for syncronize
-        $order_status = $this->params->get('orderstatus',array('*'));
-        if(!is_array($order_status)){
-            $order_status = array($order_status);
-        }
-
-        if(!in_array('*',$order_status)){
-            if(!in_array($order->order_state_id, $order_status)){
-                //remove from queue
-                return '';
-            }
-        }
-        $order_params = $this->getRegistryObject($order->order_params);
-        $order_campaign_status = $order_params->get('app_campainrabbit_order',0);
-        $opt_in = $this->params->get('enable_opt_in',0);
-        $enable_double_opt_in = $this->params->get('enable_double_opt_in',0);
-        $check_opt_in_status = false;
-        if(!$opt_in && !$enable_double_opt_in){ // check opt-in and double opt-in also disable
-            $check_opt_in_status = true;
-        }elseif(($opt_in || $enable_double_opt_in) && $order_campaign_status){ // any one opt-in enabled, user allow to synchronize order.
-            $check_opt_in_status = true;
-        }
-        if(!$check_opt_in_status && $force){ // synchronize status failed but force synchronize
-            $check_opt_in_status = true;
-        }
-        if(!$check_opt_in_status){ //return synchronize status failed
-            return '';
-        }
-
-        if(!$enable_double_opt_in && $force){ // not enable double opt-in, when force - no need to allow any operation
-            return '';
-        }
-        if($enable_double_opt_in && !$force){ // enabled double opt-in and not force synchronize - need to send email with order synchronize url.
-            // send email
-            $this->sendEmail($order);
-            return '';
-        }
-
-        if(!empty($order->campaign_order_id)){
-            $task = 'update_order';
-        }else{
-            $task = 'create_order';
-        }
-        $queue_data = array(
-            'order_id' =>$order->order_id,
-            'task' => $task
-        );
-        $this->includeCustomModel ( 'AppCampaignRabbits' );
-        $model = F0FModel::getTmpInstance ( 'AppCampaignRabbits', 'J2StoreModel' );
-        $order_queue_params = $model->getRegistryObject(json_encode($queue_data));
-        $status = $model->addSales($order_queue_params);
-        if(!$status){
-            $tz = JFactory::getConfig()->get('offset');
-            $current_date = JFactory::getDate('now', $tz)->toSql(true);
-            $date = JFactory::getDate('now +7 day', $tz)->toSql(true);
-
-            $queue = array(
-                'queue_type' => $this->_element,
-                'relation_id' => 'order_'.$order->order_id,
-                'queue_data' => json_encode($queue_data),
-                'params' => '{}',
-                'priority' => 0,
-                'status' => 'new',
-                'expired' => $date,
-                'modified_on' => $current_date
-            );
-            try{
-                $queue_table = F0FTable::getInstance('Queue', 'J2StoreTable')->getClone();
-                $queue_table->load(array(
-                    'relation_id' => $queue['relation_id']
-                ));
-                if(empty($queue_table->created_on)){
-                    $queue_table->created_on = $current_date;
-                }
-                $queue_table->bind($queue);
-                $queue_table->store();
-            }catch (Exception $e){
-                $this->_log($e->getMessage(),'Order task Exception: ');
-            }
-        }
-        return '';
+    function onJ2StoreAfterOrderstatusUpdate($order,$new_status){
+        F0FModel::addIncludePath(JPATH_SITE.'/plugins/j2store/app_campaignrabbit/app_campaignrabbit/models');
+        $model = F0FModel::getTmpInstance('AppCampaignRabbits', 'J2StoreModel');
+        return $model->orderSyn($order);
     }
+
+
 
     function onJ2StoreCheckoutAfterRegister(){
         $status = $this->checkPHPVersion();
@@ -390,7 +304,7 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
 
     /**
      * Process Queue
-    */
+     */
     public function onJ2StoreProcessQueue($list){
 
         $status = $this->checkPHPVersion();
@@ -489,34 +403,9 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
         return $html;
     }
 
-    public function sendEmail($order){
-        //get the config class obj
-        $config = JFactory::getConfig();
-        //get the mailer class object
-        $mailer = JFactory::getMailer();
-        $mailfrom = $config->get('mailfrom');
-        $fromname = $config->get('fromname');
-        $sitename = $config->get('sitename');
-        $mailer->addRecipient($order->user_email);
-        $cron_key = J2Store::config ()->get ( 'queue_key','' );
-        $url = rtrim(JUri::base(false),'/').'/index.php?option=com_j2store&view=crons&task=cron&cron_secret='.$cron_key.'&command=campaign_double_opt&order_id='.$order->order_id;
-        $subject = JText::sprintf('J2STORE_CAMPAIGN_RABBIT_SUBJECT',$sitename,$order->order_id);
-        $body = JText::sprintf('J2STORE_CAMPAIGN_RABBIT_BODY',$url);
-        $mailer->setSubject($subject );
-        $mailer->setBody($body);
-        $mailer->IsHTML(1);
-        $mailer->setSender(array( $mailfrom, $fromname ));
-        if(!$mailer->send()){
-            $msg = JText::_('PLG_J2STORE_EMAILBASKET_SENDING_FAILED');
-            $this->_log($msg);
-            $order->add_history($msg);
-        }else{
-            $msg = JText::_('PLG_J2STORE_EMAILBASKET_SENDING_SUCCESS');
-            $order->add_history($msg);
-        }
-    }
 
-    public function onJ2StoreProcessCron($command){
+
+    /*public function onJ2StoreProcessCron($command){
         if($command == 'campaign_double_opt'){
             $app = JFactory::getApplication();
             $order_id = $app->input->getString('order_id','');
@@ -529,7 +418,7 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
                 $this->orderSyn($order_table, true);
             }
         }
-    }
+    }*/
 
     /**
      * Simple logger
