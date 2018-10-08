@@ -29,19 +29,14 @@ class JFormFieldInvoicesyncronize extends JFormFieldList
 
     public function getInput()
     {
-        $db = JFactory::getDBo();
-        $query = $db->getQuery(true);
-        $query->select('*')->from('#__extensions')->where('type='.$db->q('plugin'))->where('element='.$db->q($this->_element))->where('folder='.$db->q('j2store'));
-        $db->setQuery($query);
-        $plugin = $db->loadObject();
-
         F0FModel::addIncludePath(JPATH_SITE.'/plugins/j2store/'.$this->_element.'/'.$this->_element.'/models');
         $model = F0FModel::getTmpInstance('AppCampaignRabbits', 'J2StoreModel');
-        $list = $model->getInvoiceList();
+        $plugin = $model->getPlugin();
+        $plugin_params = $model->getPluginParams();
         $invoice_url = JUri::base()."index.php?option=com_j2store&view=app&task=view&id=".$plugin->extension_id."&appTask=invoicesyn";
 
-        $total = count($list);
-        $patch = 5;
+        $patch = $plugin_params->get('patch_count',20);
+        $total = $model->getInvoiceListCount();
         $start = 0;
         echo "<a class='btn btn-success' id='invoice_patch'>".JText::_('J2STORE_CAMPAIGN_INVOICE_SYN')."</a>";
         // do script to patch process

@@ -36,13 +36,13 @@ class plgJ2StoreApp_campaignrabbitInstallerScript {
         }
 
         //campaign_variant_id
-        if (in_array ( $prefix . 'j2store_variants', $tables )) {
+       /* if (in_array ( $prefix . 'j2store_variants', $tables )) {
             $fields = $db->getTableColumns ( '#__j2store_variants' );
             if (! array_key_exists ( 'campaign_variant_id', $fields )) {
                 $query = "ALTER TABLE #__j2store_variants ADD `campaign_variant_id` varchar(255) NOT NULL;";
                 $this->_executeQuery ( $query );
             }
-        }
+        }*/
 
         //campaign_order_id
         if (in_array ( $prefix . 'j2store_orders', $tables )) {

@@ -442,16 +442,20 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
     }
 
     public function getRegistryObject($json){
-        if(!$json instanceof JRegistry) {
-            $params = new JRegistry();
-            try {
-                $params->loadString($json);
+        try{
+            if(!$json instanceof JRegistry) {
+                $params = new JRegistry();
+                try {
+                    $params->loadString($json);
 
-            }catch(Exception $e) {
-                $params = new JRegistry('{}');
+                }catch(Exception $e) {
+                    $params = new JRegistry('{}');
+                }
+            }else{
+                $params = $json;
             }
-        }else{
-            $params = $json;
+        }catch (Exception $e){
+            $params = new JRegistry('{}');
         }
         return $params;
     }

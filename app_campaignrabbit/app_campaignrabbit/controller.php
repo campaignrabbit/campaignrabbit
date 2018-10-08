@@ -33,9 +33,20 @@ class J2StoreControllerAppCampaignRabbit extends J2StoreAppController
 
     public function checkToken(){
         $model = F0FModel::getTmpInstance('AppCampaignRabbits', 'J2StoreModel');
-        $out_response = $model->auth();
-        $json = array();
         $params = $model->getPluginParams();
+        $app = JFactory::getApplication();
+        $app_id = $app->input->get('app_id','');
+        $api_token = $app->input->get('api_token','');
+        $params->set('app_id',$app_id);
+        $params->set('api_token',$api_token);
+        try{
+            $model->saveParams($params);
+        }catch (Exception $e){
+
+        }
+        $out_response = $model->auth($params);
+
+        $json = array();
         if(isset($out_response['body']->error) && !empty($out_response['body']->error)){
             $json['error'] = $out_response['body']->error;
             $params->set('is_verified',0);
@@ -49,7 +60,7 @@ class J2StoreControllerAppCampaignRabbit extends J2StoreAppController
         }
         $model->saveParams($params);
         echo json_encode($json);
-        exit;
+        $app->close();
     }
 
     public function add_to_queue(){

@@ -41,21 +41,15 @@ class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
         $db->execute ();
     }
 
-    public function getCustomerList($limit=0,$start=0){
+    public function getInvoiceQuery($is_count = false) {
         $db = JFactory::getDbo ();
         $query = $db->getQuery ( true );
-        $query->select('#__j2store_addresses.*')->from('#__j2store_addresses');
-        $query->where('#__j2store_addresses.campaign_addr_id = ""');
-        $query->group('#__j2store_addresses.j2store_address_id');
-        $query->join('INNER', '#__j2store_orders AS o ON #__j2store_addresses.email = o.user_email');
-        $db->setQuery($query,$start,$limit);
-        return $db->loadObjectList();
-    }
+        if($is_count) {
+            $query->select('COUNT(#__j2store_orders.j2store_order_id)')->from('#__j2store_orders');
+        }else {
+            $query->select('#__j2store_orders.*')->from('#__j2store_orders');
+        }
 
-    public function getInvoiceList($limit=0,$start=0){
-        $db = JFactory::getDbo ();
-        $query = $db->getQuery ( true );
-        $query->select('#__j2store_orders.*')->from('#__j2store_orders');
         $plugin_params = $this->getPluginParams();
 
         $query->where('#__j2store_orders.campaign_order_id = ""');
@@ -73,8 +67,69 @@ class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
             $query->where('#__j2store_orders.order_state_id IN ('.implode(',', $order_status ).')');
         }
         $query->group('#__j2store_orders.j2store_order_id');
-        $db->setQuery($query,$start,$limit);
-        return $db->loadObjectList();
+        return $query;
+    }
+
+    public function getInvoiceList($limit=0,$start=0){
+        $db = JFactory::getDbo ();
+        try{
+            $query = $this->getInvoiceQuery();
+            $db->setQuery($query,$start,$limit);
+            $list = $db->loadObjectList();
+        }catch ( Exception $e ){
+            $list = array();
+        }
+        return $list;
+    }
+
+    public function getInvoiceListCount(){
+        $db = JFactory::getDbo ();
+        try{
+            $query = $this->getInvoiceQuery(true);
+            $db->setQuery($query);
+            $total = $db->loadResult();
+        }catch ( Exception $e ){
+            $total = 0;
+        }
+        return $total;
+    }
+
+    public function getCustomerQuery($is_count = false){
+        $db = JFactory::getDbo ();
+        $query = $db->getQuery ( true );
+        if($is_count) {
+            $query->select('COUNT(#__j2store_addresses.j2store_address_id)')->from('#__j2store_addresses');
+        }else {
+            $query->select('#__j2store_addresses.*')->from('#__j2store_addresses');
+        }
+        $query->join('INNER', '#__j2store_orders AS o ON #__j2store_addresses.email = o.user_email');
+        $query->where('#__j2store_addresses.campaign_addr_id = ""');
+        $query->group('#__j2store_addresses.j2store_address_id');
+        return $query;
+    }
+
+    public function getCustomerList($limit=0,$start=0){
+        $db = JFactory::getDbo ();
+        try{
+            $query = $this->getCustomerQuery();
+            $db->setQuery($query,$start,$limit);
+            $list = $db->loadObjectList();
+        }catch (Exception $e){
+            $list = array();
+        }
+        return $list;
+    }
+
+    public function getCustomerListCount(){
+        $db = JFactory::getDbo ();
+        try{
+            $query = $this->getCustomerQuery(true);
+            $db->setQuery($query);
+            $total = $db->loadResult();
+        }catch ( Exception $e ){
+            $total = 0;
+        }
+        return $total;
     }
 
     public function buildQuery($overrideLimits=false) {
@@ -120,8 +175,11 @@ class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
      * Campaign Authentication
      * @return array - response from Campaign Rabbit
      */
-    public function auth(){
-        $params = $this->getPluginParams();
+    public function auth($params = ''){
+
+        if(empty($params)){
+            $params = $this->getPluginParams();
+        }
         try{
             $api_token = $params->get('api_token','');
             $app_id = $params->get('app_id','');

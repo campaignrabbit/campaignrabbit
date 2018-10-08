@@ -30,11 +30,9 @@ class JFormFieldCampaignconnect extends JFormFieldList
 
     public function getInput()
     {
-        $db = JFactory::getDBo();
-        $query = $db->getQuery(true);
-        $query->select('*')->from('#__extensions')->where('type='.$db->q('plugin'))->where('element='.$db->q('app_campaignrabbit'))->where('folder='.$db->q('j2store'));
-        $db->setQuery($query);
-        $plugin = $db->loadObject();
+        F0FModel::addIncludePath(JPATH_SITE.'/plugins/j2store/'.$this->_element.'/'.$this->_element.'/models');
+        $model = F0FModel::getTmpInstance('AppCampaignRabbits', 'J2StoreModel');
+        $plugin = $model->getPlugin();
         $url = "index.php?option=com_j2store&view=app&task=view&layout=view&id=".$plugin->extension_id."&appTask=checkToken&tmpl=component";
         echo "<button id='campaign_connect_btn' class='btn btn-primary' type='button' onclick='connectCampaign()'>" . JText::_('J2STORE_CHECK') . "</button>";
         echo "<div class='campaign_error'></div>";
@@ -47,7 +45,10 @@ class JFormFieldCampaignconnect extends JFormFieldList
                         url: '<?php echo $url;?>',
                         type: 'post',
                         cache: false,
-                        contentType: 'application/json; charset=utf-8',
+                        data:{
+                            app_id : $('#params_app_id').val(),
+                            api_token: $('#params_api_token').val()
+                        },
                         dataType: 'json',
                         beforeSend: function() {
                             $('#campaign_connect_btn').after('<span class="wait"><img src="<?php echo trim(JUri::root(),'/');?>/media/j2store/images/loader.gif" alt="" /></span>');

@@ -31,23 +31,16 @@ class JFormFieldCustomersyncronize extends JFormFieldList
 
     public function getInput()
     {
-        $db = JFactory::getDBo();
-        $query = $db->getQuery(true);
-        $query->select('*')->from('#__extensions')->where('type='.$db->q('plugin'))->where('element='.$db->q($this->_element))->where('folder='.$db->q('j2store'));
-        $db->setQuery($query);
-        $plugin = $db->loadObject();
-
         F0FModel::addIncludePath(JPATH_SITE.'/plugins/j2store/'.$this->_element.'/'.$this->_element.'/models');
         $model = F0FModel::getTmpInstance('AppCampaignRabbits', 'J2StoreModel');
-        $list = $model->getCustomerList();
-
+        $plugin = $model->getPlugin();
+        $plugin_params = $model->getPluginParams();
         $customer_url =  JUri::base()."index.php?option=com_j2store&view=apps&task=view&id=".$plugin->extension_id."&appTask=usersyn";
-        $total = count($list);
-        $patch = 5;
+
+        $patch = $plugin_params->get('patch_count',20);
+        $total = $model->getCustomerListCount();
         $start = 0;
         $done = 0;
-
-
 ?>
         <?php
         echo "<a class='btn btn-success' id='customer_patch'>".JText::_('J2STORE_CAMPAIGN_CUSTOMER_SYN')."</a>";
