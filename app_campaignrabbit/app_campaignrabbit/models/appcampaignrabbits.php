@@ -44,29 +44,37 @@ class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
     public function getInvoiceQuery($is_count = false) {
         $db = JFactory::getDbo ();
         $query = $db->getQuery ( true );
-        if($is_count) {
-            $query->select('COUNT(#__j2store_orders.j2store_order_id)')->from('#__j2store_orders');
-        }else {
-            $query->select('#__j2store_orders.*')->from('#__j2store_orders');
-        }
-
         $plugin_params = $this->getPluginParams();
-
-        $query->where('#__j2store_orders.campaign_order_id = ""');
-
-
-        $zero_order = $plugin_params->get('synch_zero_order',1);
-        if(!$zero_order){
-            $query->where('#__j2store_orders.order_total > 0');
-        }
         $order_status = $plugin_params->get('orderstatus',array('*'));
         if(!is_array($order_status)){
             $order_status = array($order_status);
         }
-        if(!in_array('*',$order_status)){
-            $query->where('#__j2store_orders.order_state_id IN ('.implode(',', $order_status ).')');
+        if($is_count) {
+        //    $query->select('COUNT(#__j2store_orders.j2store_order_id)')->from('#__j2store_orders');
+            $subquery = "SELECT `#__j2store_orders`.`j2store_order_id` FROM `#__j2store_orders`";
+            $zero_order = $plugin_params->get('synch_zero_order',1);
+            if(!$zero_order){
+                $subquery .= "WHERE `#__j2store_orders`.`order_total` > 0";
+            }
+            if(!in_array('*',$order_status)){
+                $subquery .= " AND `#__j2store_orders`.`order_state_id` IN (".implode(',', $order_status ).")";
+            }
+            $subquery .= "GROUP BY `#__j2store_orders`.`j2store_order_id`";
+            $query = "SELECT COUNT(*) FROM ($subquery) as list";
+            //$subquery = 'SELECT CASE WHEN `#__j2store_addresses`.`email` != "" THEN `#__j2store_addresses`.`email` ELSE `#__users`.email END FROM `#__j2store_addresses` LEFT JOIN `#__users` ON `#__j2store_addresses`.`email` = `#__users`.`email` WHERE `#__j2store_addresses`.`email` != "" GROUP BY `#__j2store_addresses`.`email`';
+        }else {
+            $query->select('#__j2store_orders.*')->from('#__j2store_orders');
+            $zero_order = $plugin_params->get('synch_zero_order',1);
+            if(!$zero_order){
+                $query->where('#__j2store_orders.order_total > 0');
+            }
+            //$query->where('#__j2store_orders.campaign_order_id = ""');
+            if(!in_array('*',$order_status)){
+                $query->where('#__j2store_orders.order_state_id IN ('.implode(',', $order_status ).')');
+            }
+            $query->group('#__j2store_orders.j2store_order_id');
         }
-        $query->group('#__j2store_orders.j2store_order_id');
+
         return $query;
     }
 
@@ -98,13 +106,12 @@ class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
         $db = JFactory::getDbo ();
         $query = $db->getQuery ( true );
         if($is_count) {
-            $query->select('COUNT(#__j2store_addresses.j2store_address_id)')->from('#__j2store_addresses');
+            $subquery = 'SELECT CASE WHEN `#__j2store_addresses`.`email` != "" THEN `#__j2store_addresses`.`email` ELSE `#__users`.email END FROM `#__j2store_addresses` LEFT JOIN `#__users` ON `#__j2store_addresses`.`email` = `#__users`.`email` WHERE `#__j2store_addresses`.`email` != "" GROUP BY `#__j2store_addresses`.`email`';
+            $query = "SELECT COUNT(*) FROM ($subquery) as list";
         }else {
-            $query->select('#__j2store_addresses.*')->from('#__j2store_addresses');
+            $query = 'SELECT (CASE WHEN `#__j2store_addresses`.`email` != "" THEN `#__j2store_addresses`.`email` ELSE `#__users`.`email` END) as email ,`#__j2store_addresses`.* FROM `#__j2store_addresses` LEFT JOIN `#__users` ON `#__j2store_addresses`.`email` = `#__users`.`email` WHERE `#__j2store_addresses`.`email` != "" GROUP BY `#__j2store_addresses`.`email`';
         }
-        $query->join('INNER', '#__j2store_orders AS o ON #__j2store_addresses.email = o.user_email');
-        $query->where('#__j2store_addresses.campaign_addr_id = ""');
-        $query->group('#__j2store_addresses.j2store_address_id');
+
         return $query;
     }
 

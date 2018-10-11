@@ -489,4 +489,29 @@ class J2StoreControllerAppCampaignRabbit extends J2StoreAppController
         $url = "index.php?option=com_j2store&view=app&task=view&appTask=manageQueue&id=".$id;
         $app->redirect($url,JText::_('J2STORE_CAMPAIGN_RABBIT_QUEUE_RESET_COMPLETED'));
     }
+
+    public function deleteQueue(){
+        $db = JFactory::getDBo();
+        $query = $db->getQuery(true);
+        $app = JFactory::getApplication();
+        $is_expired = $app->input->get('is_expired','no');
+        $query->delete("#__j2store_queues")->where('queue_type='.$db->q($this->_element));
+        $repeat_count = J2Store::config()->get('queue_repeat_count',10);
+        if(!empty( $repeat_count ) &&  $is_expired == 'no'){
+            $query->where ( 'repeat_count <= '.$db->q($repeat_count) );
+        }
+        if(!empty( $repeat_count ) && $is_expired == 'yes'){
+            $query->where ( 'repeat_count > '.$db->q($repeat_count) );
+        }
+
+        $db->setQuery($query);
+        try {
+            $db->execute ();
+        } catch ( Exception $e ) {
+            // do nothing. we dont want to fail the install process.
+        }
+        $id = $app->input->get('id',0);
+        $url = "index.php?option=com_j2store&view=app&task=view&appTask=manageQueue&id=".$id;
+        $app->redirect($url,JText::_('J2STORE_CAMPAIGN_RABBIT_QUEUE_DELETE_COMPLETED'));
+    }
 }

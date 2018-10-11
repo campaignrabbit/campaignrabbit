@@ -38,7 +38,14 @@ $url = "index.php?option=com_j2store&view=app&task=view&appTask=manageQueue&id="
 		</span>
                 <?php if($this->vars->is_expired == 'yes'):?>
                     <div>
+                        <span class="pull-right"><a class="btn btn-danger" href="<?php echo 'index.php?option=com_j2store&view=app&task=view&appTask=deleteQueue&id='.$this->vars->id.'&is_expired=yes'?>"><?php echo JText::_('J2STORE_APP_QUICKBOOK_DELETE_QUEUE');?></a></span>
+                    </div>
+                    <div>
                         <span class="pull-right"><a class="btn btn-primary" href="<?php echo 'index.php?option=com_j2store&view=app&task=view&appTask=reQueue&id='.$this->vars->id.'&is_expired=yes'?>"><?php echo JText::_('J2STORE_APP_CAMPAIGN_RABBIT_REQUEUE');?></a></span>
+                    </div>
+                <?php elseif ($this->vars->is_expired == 'no'): ?>
+                    <div>
+                        <span class="pull-right"><a class="btn btn-danger" href="<?php echo 'index.php?option=com_j2store&view=app&task=view&appTask=deleteQueue&id='.$this->vars->id.'&is_expired=no'?>"><?php echo JText::_('J2STORE_APP_QUICKBOOK_DELETE_QUEUE');?></a></span>
                     </div>
                 <?php endif; ?>
                 <br/>

@@ -2,9 +2,9 @@
 <extension type="package" version="3.0" method="upgrade">
     <name>Package - Campaign Rabbit</name>
     <author>Alagesan</author>
-    <creationDate>JUL 2018</creationDate>
+    <creationDate>OCT 2018</creationDate>
     <packagename>CampaignRabbit</packagename>
-    <version>1.0.24</version>
+    <version>1.0.25</version>
     <url>https://www.j2store.org</url>
     <packager>Alagesan</packager>
     <packagerurl>https://www.j2store.org</packagerurl>
