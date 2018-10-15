@@ -154,6 +154,7 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
 
             $ship_address_id = $session->get('shipping_address_id','','j2store');
             $queue_data = array(
+                'order_id' => $order->order_id,
                 'user_id' => $user->id,
                 'email' => $address->email,
                 'ship_address_id' => $ship_address_id,

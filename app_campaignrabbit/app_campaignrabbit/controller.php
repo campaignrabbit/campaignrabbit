@@ -74,6 +74,7 @@ class J2StoreControllerAppCampaignRabbit extends J2StoreAppController
         //$params = $model->getPluginParams();
         $json = array();
         if( !empty($order_id) && $order_id == $order->order_id){
+            $order_info = $order->getOrderInformation();
             $address = $this->getCustomerInfo($order->user_email,$order->user_id);
             if(isset($address->j2store_address_id) && !empty($address->j2store_address_id)){
                 if(isset($address->campaign_addr_id) && !empty($address->campaign_addr_id)){
@@ -91,9 +92,7 @@ class J2StoreControllerAppCampaignRabbit extends J2StoreAppController
                     'task' => $task
                 );
                 $customer_queue_params = $model->getRegistryObject(json_encode($queue_data));
-
                 $customer_status = $model->addCustomer($customer_queue_params);
-                
                 if(!$customer_status){
                     $tz = JFactory::getConfig()->get('offset');
                     $current_date = JFactory::getDate('now', $tz)->toSql(true);
@@ -109,28 +108,60 @@ class J2StoreControllerAppCampaignRabbit extends J2StoreAppController
                         'expired' => $date,
                         'modified_on' => $current_date
                     );
-                    try{
-                        $queue_table = F0FTable::getInstance('Queue', 'J2StoreTable')->getClone();
-                        $queue_table->load(array(
-                            'relation_id' => $queue['relation_id']
-                        ));
-                        if(empty($queue_table->created_on)){
-                            $queue_table->created_on = $current_date;
-                        }
-                        $queue_table->bind($queue);
-                        $queue_table->store();
-                        $customer_note = JText::sprintf('J2STORE_APP_CAMPAIGNRABBIT_CUSTOMER_ADD_TO_QUEUE',$address->email);
-                        $order->add_history($customer_note);
-                    }catch (Exception $e){
-                        // do nothing
-                        $this->_log($e->getMessage(),'Backend Admin Customer Exception: ');
-                        $json['error'] = $e->getMessage();
-                        $customer_note_error = JText::sprintf('J2STORE_APP_CAMPAIGNRABBIT_CUSTOMER_ADD_TO_QUEUE_FAILED',json_encode($e->getMessage()));
-                        $order->add_history($customer_note_error);
-                    }
                 }
+            }elseif(isset($order_info->order_id) && !empty($order_info->order_id)){
+                $queue_data = array(
+                    'order_id' => $order_info->order_id,
+                    'user_id' => $order->user_id,
+                    'email' => $order->user_email,
+                    'ship_address_id' => 0,
+                    'billing_address_id' => 0,
+                    'task' => 'create_customer'
+                );
+                $customer_queue_params = $model->getRegistryObject(json_encode($queue_data));
+                $customer_status = $model->addCustomer($customer_queue_params);
+                if(!$customer_status){
+                    $tz = JFactory::getConfig()->get('offset');
+                    $current_date = JFactory::getDate('now', $tz)->toSql(true);
+                    $date = JFactory::getDate('now +7 day', $tz)->toSql(true);
 
+                    $queue = array(
+                        'queue_type' => $this->_element,
+                        'relation_id' => 'user_'.$order_info->order_id,
+                        'queue_data' => json_encode($queue_data),
+                        'params' => '{}',
+                        'priority' => 0,
+                        'status' => 'new',
+                        'expired' => $date,
+                        'modified_on' => $current_date
+                    );
+                }
+            }else{
+                $customer_status = true;
             }
+
+            if(!$customer_status){
+                try{
+                    $queue_table = F0FTable::getInstance('Queue', 'J2StoreTable')->getClone();
+                    $queue_table->load(array(
+                        'relation_id' => $queue['relation_id']
+                    ));
+                    if(empty($queue_table->created_on)){
+                        $queue_table->created_on = $current_date;
+                    }
+                    $queue_table->bind($queue);
+                    $queue_table->store();
+                    $customer_note = JText::sprintf('J2STORE_APP_CAMPAIGNRABBIT_CUSTOMER_ADD_TO_QUEUE',$address->email);
+                    $order->add_history($customer_note);
+                }catch (Exception $e){
+                    // do nothing
+                    $this->_log($e->getMessage(),'Backend Admin Customer Exception: ');
+                    $json['error'] = $e->getMessage();
+                    $customer_note_error = JText::sprintf('J2STORE_APP_CAMPAIGNRABBIT_CUSTOMER_ADD_TO_QUEUE_FAILED',json_encode($e->getMessage()));
+                    $order->add_history($customer_note_error);
+                }
+            }
+
             if(empty($json)){
 
                 if(!empty($order->campaign_order_id)){
@@ -202,20 +233,21 @@ class J2StoreControllerAppCampaignRabbit extends J2StoreAppController
         $lists = $model->getCustomerList($limit,$start);
 
         if(!empty($lists)){
-            foreach ($lists as $address){
-                if(isset($address->campaign_addr_id) && !empty($address->campaign_addr_id)){
+            foreach ($lists as $order_info){
+                /*if(isset($address->campaign_addr_id) && !empty($address->campaign_addr_id)){
                     $task = 'update_customer';
                 }else{
                     $task = 'create_customer';
-                }
+                }*/
 
-                $ship_address_id = $address->j2store_address_id;
+                //$ship_address_id = $address->j2store_address_id;
                 $queue_data = array(
-                    'user_id' => $address->user_id,
-                    'email' => $address->email,
-                    'ship_address_id' => $ship_address_id,
-                    'billing_address_id' => $address->j2store_address_id,
-                    'task' => $task
+                    'order_id' => $order_info->order_id,
+                    'user_id' => $order_info->user_id,
+                    'email' => $order_info->user_email,
+                    'ship_address_id' => 0,
+                    'billing_address_id' => 0,
+                    'task' => 'create_customer'
                 );
 
                 $tz = JFactory::getConfig()->get('offset');
@@ -224,7 +256,7 @@ class J2StoreControllerAppCampaignRabbit extends J2StoreAppController
 
                 $queue = array(
                     'queue_type' => $this->_element,
-                    'relation_id' => 'user_'.$address->j2store_address_id,
+                    'relation_id' => 'user_'.$order_info->order_id,
                     'queue_data' => json_encode($queue_data),
                     'params' => '{}',
                     'priority' => 0,

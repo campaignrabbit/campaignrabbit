@@ -102,14 +102,29 @@ class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
         return $total;
     }
 
+    /*public function getCustomerQuery($is_count = false){
+        $db = JFactory::getDbo ();
+        $query = $db->getQuery ( true );
+        if($is_count) {
+            $subquery = 'SELECT CASE WHEN `#__j2store_addresses`.`email` != "" THEN `#__j2store_addresses`.`email` ELSE `#__users`.email END FROM `#__j2store_addresses`
+    LEFT JOIN `#__users` ON `#__j2store_addresses`.`email` = `#__users`.`email` WHERE `#__j2store_addresses`.`email` != "" GROUP BY `#__j2store_addresses`.`email`';
+            $query = "SELECT COUNT(*) FROM ($subquery) as list";
+        }else {
+            $query = 'SELECT (CASE WHEN `#__j2store_addresses`.`email` != "" THEN `#__j2store_addresses`.`email` ELSE `#__users`.`email` END) as email ,`#__j2store_addresses`.* FROM `#__j2store_addresses` LEFT JOIN `#__users` ON `#__j2store_addresses`.`email` = `#__users`.`email` WHERE `#__j2store_addresses`.`email` != "" GROUP BY `#__j2store_addresses`.`email`';
+        }
+
+        return $query;
+    }*/
+
     public function getCustomerQuery($is_count = false){
         $db = JFactory::getDbo ();
         $query = $db->getQuery ( true );
         if($is_count) {
-            $subquery = 'SELECT CASE WHEN `#__j2store_addresses`.`email` != "" THEN `#__j2store_addresses`.`email` ELSE `#__users`.email END FROM `#__j2store_addresses` LEFT JOIN `#__users` ON `#__j2store_addresses`.`email` = `#__users`.`email` WHERE `#__j2store_addresses`.`email` != "" GROUP BY `#__j2store_addresses`.`email`';
+            $subquery = 'SELECT `#__j2store_orders`.`user_email` FROM `#__j2store_orders` WHERE `#__j2store_orders`.`user_email` != "" GROUP BY `#__j2store_orders`.`user_email`';
             $query = "SELECT COUNT(*) FROM ($subquery) as list";
         }else {
-            $query = 'SELECT (CASE WHEN `#__j2store_addresses`.`email` != "" THEN `#__j2store_addresses`.`email` ELSE `#__users`.`email` END) as email ,`#__j2store_addresses`.* FROM `#__j2store_addresses` LEFT JOIN `#__users` ON `#__j2store_addresses`.`email` = `#__users`.`email` WHERE `#__j2store_addresses`.`email` != "" GROUP BY `#__j2store_addresses`.`email`';
+            $query->select('#__j2store_orderinfos.*,#__j2store_orders.user_email, #__j2store_orders.user_id')->from('#__j2store_orders')->join('LEFT','#__j2store_orderinfos ON #__j2store_orderinfos.order_id = #__j2store_orders.order_id')
+                ->where('#__j2store_orders.user_email != ""')->group('#__j2store_orders.user_email');
         }
 
         return $query;
@@ -437,36 +452,82 @@ class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
         $email = $queue_data->get('email', '');
         $email = trim($email);
         if(empty($email)) return true;
+        $order_id = $queue_data->get('order_id', '');
+        $address_process = false;
+        if(!empty($order_id)){
+            F0FTable::addIncludePath(JPATH_ADMINISTRATOR.'/components/com_j2store/tables');
+            $order = F0FTable::getInstance ( 'Order', 'J2StoreTable' )->getClone ();
+            $order->load ( array (
+                'order_id' => $order_id
+            ) );
+            $order_info = $order->getOrderInformation();
+            if(isset($order_info->order_id) && !empty($order_info->order_id)){
+                // customer params
+                $metas = array();
+                //get user from email
+                $db = JFactory::getDBo();
+                $query  = $db->getQuery(true);
+                $query->select('*');
+                $query->from('#__users');
+                $query->where('email =' .$db->q($email));
+                $db->setQuery($query);
+                $user   = $db->loadObject();
+                if(empty($user)){
+                    $id = 0;
+                }else{
+                    $id = $user->id;
+                }
+                $name = $order_info->billing_first_name.' '.$order_info->billing_last_name;
+                $metas[] = array(
+                    'meta_key' => 'CUSTOMER_GROUP',
+                    'meta_value' => $this->getUserGroups($id),
+                    'meta_options' => ''
+                );
 
-        $address_id = $queue_data->get('billing_address_id','');
-        $user_id = $queue_data->get('user_id',0);
+                foreach ($order_info as $key => $value){
+                    if(!empty($value) && !in_array($key,array('all_billing','all_shipping','all_payment'))){
+                        $meta = array();
+                        $meta['meta_key'] = $key;
+                        if(is_array($value)){
+                            $value = json_encode($value);
+                        }
+                        $meta['meta_value'] = $value;
+                        $meta['meta_options'] = '';
+                        $metas[] = $meta;
+                    }
 
-        F0FTable::addIncludePath ( JPATH_ADMINISTRATOR . '/components/com_j2store/tables' );
-        $address = F0FTable::getInstance('Address', 'J2StoreTable')->getClone();
+                }
 
-        if(!$address->load($address_id)){
-            $address->load(array(
-                'user_id' => $user_id
-            ));
-        }
-        $user = JFactory::getUser($user_id);
-        if(empty($address->j2store_address_id)){
-            $name = $user->username;
+                $customer_params = array(
+                    'email' => $email,
+                    'created_at' => $user->registerDate,
+                    'updated_at' => $user->registerDate,
+                    'name' => $name,
+                    'meta' => $metas,
+                );
+            }else{
+                $address_process = true;
+            }
         }else{
-            $name = $address->first_name.' '. $address->last_name;
+            $address_process = true;
         }
 
+        if($address_process){
+            $address_id = $queue_data->get('billing_address_id','');
+            $user_id = $queue_data->get('user_id',0);
+            F0FTable::addIncludePath ( JPATH_ADMINISTRATOR . '/components/com_j2store/tables' );
+            $address = F0FTable::getInstance('Address', 'J2StoreTable')->getClone();
 
-        $contact_status = false;
-        try{
-            // check customer exit
-            //query-customer
-
-            $campaign_customer = $this->getCustomer($email);
-
-            $is_need_update = false;
-            if(isset($campaign_customer['body']->id)){
-                $is_need_update = true;
+            if(!$address->load($address_id)){
+                $address->load(array(
+                    'user_id' => $user_id
+                ));
+            }
+            $user = JFactory::getUser($user_id);
+            if(empty($address->j2store_address_id)){
+                $name = $user->username;
+            }else{
+                $name = $address->first_name.' '. $address->last_name;
             }
 
             // customer params
@@ -502,7 +563,18 @@ class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
                 'name' => $name,
                 'meta' => $metas,
             );
+        }
 
+        $contact_status = false;
+        try{
+            // check customer exit
+            //query-customer
+            $campaign_customer = $this->getCustomer($email);
+            $is_need_update = false;
+            if(isset($campaign_customer['body']->id)){
+                $is_need_update = true;
+            }
+            
             if($is_need_update){
                 // update customer
                 $out_response = $this->updateCustomer($customer_params,$email);
