@@ -60,22 +60,6 @@ class plgSystemCampaignrabbit extends JPlugin {
         return $run_status;
     }
     function onAfterRoute() {
-        if($this->canRun()){
-            $document = JFactory::getDocument();
-            $params = $this->getPluginParams();
-            $app_id = $params->get('app_id', '');
-            $analaysis_array = array(
-                'app_id' => $app_id
-            );
-            $user = JFactory::getUser();
-            if($user->id > 0){
-                $analaysis_array['email'] = $user->email;
-            }
-            $script_content = 'window.app_id = "'.$app_id.'";
-            window.campaignrabbit = '.json_encode($analaysis_array).';
-                !function(e,t,n,p,o,a,i,s,c){e[o]||(i=e[o]=function(){i.process?i.process.apply(i,arguments):i.queue.push(arguments)},i.queue=[],i.t=1*new Date,s=t.createElement(n),s.async=1,s.src=p+"?t="+Math.ceil(new Date/a)*a,c=t.getElementsByTagName(n)[0],c.parentNode.insertBefore(s,c))}(window,document,"script","https://cdn.campaignrabbit.com/campaignrabbit.analytics.js","rabbit",1),rabbit("init",'.$app_id.'),rabbit("event","pageload");';
-            $document->addScriptDeclaration($script_content);
-        }
         $app = JFactory::getApplication();
         $option = $app->input->get('option','');
         $command = $app->input->get('command','');
@@ -93,6 +77,30 @@ class plgSystemCampaignrabbit extends JPlugin {
                 $model->orderSyn($order_table, true);
             }
         }
+    }
+
+    function onAfterRender() {
+        if($this->canRun()){
+            $params = $this->getPluginParams();
+            $app_id = $params->get('app_id', '');
+            $analaysis_array = array(
+                'app_id' => $app_id
+            );
+            $user = JFactory::getUser();
+            if($user->id > 0){
+                $analaysis_array['email'] = $user->email;
+            }
+            $script_content = '<script type="text/javascript">
+            window.campaignrabbit = '.json_encode($analaysis_array).';
+                !function(e,t,n,p,o,a,i,s,c){e[o]||(i=e[o]=function(){i.process?i.process.apply(i,arguments):i.queue.push(arguments)},i.queue=[],i.t=1*new Date,s=t.createElement(n),s.async=1,s.src=p+"?t="+Math.ceil(new Date/a)*a,c=t.getElementsByTagName(n)[0],c.parentNode.insertBefore(s,c))}(window,document,"script","https://cdn.campaignrabbit.com/campaignrabbit.analytics.js","rabbit",1),rabbit("init",'.$app_id.'),rabbit("event","pageload");</script>';
+            $this->_moveScript($script_content);
+        }
+    }
+
+    private function _moveScript($script) {
+        $app = JFactory::getApplication();
+        $body = str_replace('</body>', $script . "</body>", $app->getBody());
+        $app->setBody($body);
     }
 
     function onUserAfterSave($user,$isnew,$success,$msg){
