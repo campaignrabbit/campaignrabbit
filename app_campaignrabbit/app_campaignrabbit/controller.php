@@ -31,6 +31,23 @@ class J2StoreControllerAppCampaignRabbit extends J2StoreAppController
         JFactory::getLanguage()->load('plg_j2store_' . $this->_element, JPATH_ADMINISTRATOR);
     }
 
+    public function removeBanner(){
+        $model = F0FModel::getTmpInstance('AppCampaignRabbits', 'J2StoreModel');
+        $params = $model->getPluginParams();
+        $params->set('show_campaign_message',1);
+        try{
+            $model->saveParams($params);
+        }catch (Exception $e){
+
+        }
+        $app = JFactory::getApplication();
+        $json = array(
+            'success' => 1
+        );
+        echo json_encode($json);
+        $app->close();
+    }
+
     public function checkToken(){
         $model = F0FModel::getTmpInstance('AppCampaignRabbits', 'J2StoreModel');
         $params = $model->getPluginParams();
@@ -324,46 +341,11 @@ class J2StoreControllerAppCampaignRabbit extends J2StoreAppController
                         continue;
                     }
                 }
-
-                if(!empty($order->campaign_order_id)){
-                    $task = 'update_order';
-                }else{
-                    $task = 'create_order';
+                $queue_order_user_status = $this->orderUserToQueue($order);
+                if($queue_order_user_status){
+                    $queue_order_status = $this->orderToQueue($order);
                 }
-                $queue_data = array(
-                    'order_id' =>$order->order_id,
-                    'task' => $task
-                );
 
-
-
-                $tz = JFactory::getConfig()->get('offset');
-                $current_date = JFactory::getDate('now', $tz)->toSql(true);
-                $date = JFactory::getDate('now +7 day', $tz)->toSql(true);
-
-                $queue = array(
-                    'queue_type' => $this->_element,
-                    'relation_id' => 'order_'.$order->order_id,
-                    'queue_data' => json_encode($queue_data),
-                    'params' => '{}',
-                    'priority' => 0,
-                    'status' => 'new',
-                    'expired' => $date,
-                    'modified_on' => $current_date
-                );
-                try{
-                    $queue_table = F0FTable::getInstance('Queue', 'J2StoreTable')->getClone();
-                    $queue_table->load(array(
-                        'relation_id' => $queue['relation_id']
-                    ));
-                    if(empty($queue_table->created_on)){
-                        $queue_table->created_on = $current_date;
-                    }
-                    $queue_table->bind($queue);
-                    $queue_table->store();
-                }catch (Exception $e){
-                    $this->_log($e->getMessage(),'Order task Exception: ');
-                }
             }
         }
 
@@ -383,6 +365,92 @@ class J2StoreControllerAppCampaignRabbit extends J2StoreAppController
         echo json_encode($json);
         $app->close();
     }
+    public function orderUserToQueue($order_info){
+        $queue_data = array(
+            'order_id' => $order_info->order_id,
+            'user_id' => $order_info->user_id,
+            'email' => $order_info->user_email,
+            'ship_address_id' => 0,
+            'billing_address_id' => 0,
+            'task' => 'create_customer'
+        );
+
+        $tz = JFactory::getConfig()->get('offset');
+        $current_date = JFactory::getDate('now', $tz)->toSql(true);
+        $date = JFactory::getDate('now +7 day', $tz)->toSql(true);
+
+        $queue = array(
+            'queue_type' => $this->_element,
+            'relation_id' => 'user_'.$order_info->order_id,
+            'queue_data' => json_encode($queue_data),
+            'params' => '{}',
+            'priority' => 0,
+            'status' => 'new',
+            'expired' => $date,
+            'modified_on' => $current_date
+        );
+        try{
+            $queue_table = F0FTable::getInstance('Queue', 'J2StoreTable')->getClone();
+            $queue_table->load(array(
+                'relation_id' => $queue['relation_id']
+            ));
+            if(empty($queue_table->created_on)){
+                $queue_table->created_on = $current_date;
+            }
+            $queue_table->bind($queue);
+            $queue_table->store();
+            $status = true;
+        }catch (Exception $e){
+            // do nothing
+            $this->_log($e->getMessage(),'Backend Admin Customer Exception: ');
+            $status = false;
+        }
+        return $status;
+    }
+    public function orderToQueue($order){
+        if(!empty($order->campaign_order_id)){
+            $task = 'update_order';
+        }else{
+            $task = 'create_order';
+        }
+        $queue_data = array(
+            'order_id' =>$order->order_id,
+            'task' => $task
+        );
+        $tz = JFactory::getConfig()->get('offset');
+        $current_date = JFactory::getDate('now', $tz)->toSql(true);
+        $date = JFactory::getDate('now +7 day', $tz)->toSql(true);
+
+        $queue = array(
+            'queue_type' => $this->_element,
+            'relation_id' => 'order_'.$order->order_id,
+            'queue_data' => json_encode($queue_data),
+            'params' => '{}',
+            'priority' => 0,
+            'status' => 'new',
+            'expired' => $date,
+            'modified_on' => $current_date
+        );
+
+        try{
+            $queue_table = F0FTable::getInstance('Queue', 'J2StoreTable')->getClone();
+            $queue_table->load(array(
+                'relation_id' => $queue['relation_id']
+            ));
+            if(empty($queue_table->created_on)){
+                $queue_table->created_on = $current_date;
+            }
+            $queue_table->bind($queue);
+            $queue_table->store();
+            $status = true;
+        }catch (Exception $e){
+            $status = false;
+            $this->_log($e->getMessage(),'Order task Exception: ');
+        }
+        return $status;
+    }
+
+
 
     public function getCustomerInfo($email,$user_id){
 

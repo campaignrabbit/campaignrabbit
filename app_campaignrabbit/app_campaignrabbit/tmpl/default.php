@@ -254,13 +254,16 @@ JHtml::_('script', 'media/j2store/js/j2store.js', false, false);
                 </div>
                 <div class="span6 border-left">
                   <div class="j2campaignrabbit-create-account">
+                      <div class="center">
+                          <img style="max-width: 173px; height: auto;margin-top: -20px; display:inline-block" src="<?php echo trim(JUri::root(),'/').'/plugins/j2store/app_campaignrabbit/app_campaignrabbit/tmpl/campaignrabbit_logo.png';?>">
+                      </div>
                     <h3>Don't have an account?</h3>
                     <h4>
-                      Sell more by sending targetted, data-driven emails to your customers
+                        Campaignrabbit helps you automate your marketing efforts and increase conversions.
                     </h4>
-                    <p>
-                      Say goodbye to generic, boring newsletters. Use the data to create personalized, effective ecommerce marketing campaigns and drive your sales
-                    </p>
+                      <p>Sell more by showing targeted, data-driven Calls to Actions (popups / slide-ins /action bars) in your storefront and sending personalised emails to your customers.</p>
+                      <p>No coding skill required. Drag and drop to design your campaigns and go live within minutes.</p>
+                      <p>Get actionable insights and metrics on your store.</p>
                     <p>
                       <a href="https://app.campaignrabbit.com/register?utm_campaign=integration&utm_source=j2store&utm_content=register&utm_medium=web" target="_blank" class="btn btn-primary btn-lg">Get Stated for free</a>
                     </p>

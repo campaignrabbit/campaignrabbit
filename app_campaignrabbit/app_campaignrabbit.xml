@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <extension version="3.0" type="plugin" group="j2store" method="upgrade">
     <name>Campaign Rabbit</name>
-    <version>1.0.29</version>
-    <creationDate>OCT 2018</creationDate>
+    <version>1.0.30</version>
+    <creationDate>DEC 2018</creationDate>
     <author>Alagesan</author>
     <authorEmail>supports@j2store.org</authorEmail>
     <authorUrl>https://www.j2store.org</authorUrl>
@@ -67,7 +67,6 @@
                     <option value="0">J2STORE_NO</option>
                     <option value="1">J2STORE_YES</option>
                 </field>
-                <field name="campaign_cronurl" type="cronurl" label="j2store_campaignrabbit_cronurl" addfieldpath="plugins/j2store/app_campaignrabbit/app_campaignrabbit/fields"/>
             </fieldset>
 
             <fieldset name="synchronize" label="J2STORE_CAMPAIGNRABBIT_LABEL_SYNCHRONIZE">
@@ -86,10 +85,10 @@
                     <option value="200">200</option>
                 </field>
 
-                <field name="customer_syn" type="customersyncronize" default="" label="J2STORE_APP_CAMPAIGNRABBITCRM_CUSTOMERSYNCRONIZE" description="J2STORE_APP_CAMPAIGNRABBITCRM_CUSTOMERSYNCRONIZE_DESC"
-                       addfieldpath="/plugins/j2store/app_campaignrabbit/app_campaignrabbit/fields"/>
                 <field name="invoice_syn" type="invoicesyncronize" default="" label="J2STORE_APP_CAMPAIGNRABBITCRM_INVOICESYNCRONIZE" description="J2STORE_APP_CAMPAIGNRABBITCRM_INVOICESYNCRONIZE_DESC"
                        addfieldpath="/plugins/j2store/app_campaignrabbit/app_campaignrabbit/fields"/>
+
+                <field name="campaign_cronurl" type="cronurl" label="j2store_campaignrabbit_cronurl" addfieldpath="plugins/j2store/app_campaignrabbit/app_campaignrabbit/fields"/>
             </fieldset>
 
         </fields>

@@ -50,7 +50,7 @@ class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
             $order_status = array($order_status);
         }
         if($is_count) {
-        //    $query->select('COUNT(#__j2store_orders.j2store_order_id)')->from('#__j2store_orders');
+            //    $query->select('COUNT(#__j2store_orders.j2store_order_id)')->from('#__j2store_orders');
             $subquery = "SELECT `#__j2store_orders`.`j2store_order_id` FROM `#__j2store_orders`";
             $zero_order = $plugin_params->get('synch_zero_order',1);
             if(!$zero_order){
@@ -59,11 +59,12 @@ class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
             if(!in_array('*',$order_status)){
                 $subquery .= " AND `#__j2store_orders`.`order_state_id` IN (".implode(',', $order_status ).")";
             }
+            $query->where('#__j2store_orders.user_email != ""');
             $subquery .= "GROUP BY `#__j2store_orders`.`j2store_order_id`";
             $query = "SELECT COUNT(*) FROM ($subquery) as list";
             //$subquery = 'SELECT CASE WHEN `#__j2store_addresses`.`email` != "" THEN `#__j2store_addresses`.`email` ELSE `#__users`.email END FROM `#__j2store_addresses` LEFT JOIN `#__users` ON `#__j2store_addresses`.`email` = `#__users`.`email` WHERE `#__j2store_addresses`.`email` != "" GROUP BY `#__j2store_addresses`.`email`';
         }else {
-            $query->select('#__j2store_orders.*')->from('#__j2store_orders');
+            $query->select('#__j2store_orders.*,#__j2store_orderinfos.*')->from('#__j2store_orders')->join('LEFT','#__j2store_orderinfos ON #__j2store_orderinfos.order_id = #__j2store_orders.order_id');
             $zero_order = $plugin_params->get('synch_zero_order',1);
             if(!$zero_order){
                 $query->where('#__j2store_orders.order_total > 0');
@@ -72,6 +73,7 @@ class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
             if(!in_array('*',$order_status)){
                 $query->where('#__j2store_orders.order_state_id IN ('.implode(',', $order_status ).')');
             }
+            $query->where('#__j2store_orders.user_email != ""');
             $query->group('#__j2store_orders.j2store_order_id');
         }
 
@@ -574,7 +576,7 @@ class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
             if(isset($campaign_customer['body']->id)){
                 $is_need_update = true;
             }
-            
+
             if($is_need_update){
                 // update customer
                 $out_response = $this->updateCustomer($customer_params,$email);

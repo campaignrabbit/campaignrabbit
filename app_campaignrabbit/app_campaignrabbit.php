@@ -404,22 +404,18 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
         return $html;
     }
 
-
-
-    /*public function onJ2StoreProcessCron($command){
-        if($command == 'campaign_double_opt'){
-            $app = JFactory::getApplication();
-            $order_id = $app->input->getString('order_id','');
-            $order_table = F0FTable::getInstance('Order', 'J2StoreTable')->getClone();
-            $order_table->load(array(
-                'order_id' => $order_id
-            ));
-
-            if(!empty($order_table->order_id) && $order_table->order_id == $order_id ) {
-                $this->orderSyn($order_table, true);
-            }
-        }
-    }*/
+    public function onJ2StoreBeforeCpanelView(){
+        $this->includeCustomModel ( 'AppCampaignRabbits' );
+        $model = F0FModel::getTmpInstance('AppCampaignRabbits', 'J2StoreModel');
+        $vars = new stdClass();
+        $plugin = $model->getPlugin();
+        $vars->app_id = $plugin->extension_id;
+        $vars->app_url = 'index.php?option=com_j2store&view=apps&task=view&layout=view&id='.$vars->app_id;
+        $vars->logo_url = trim(JUri::root(),'/').'/plugins/j2store/app_campaignrabbit/app_campaignrabbit/tmpl/campaignrabbit_logo.png';
+        $vars->show_campaign_message = $this->params->get('show_campaign_message',0);
+        $html = $this->_getLayout('cpanel_banner', $vars);
+        return $html;
+    }
 
     /**
      * Simple logger
