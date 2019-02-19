@@ -211,6 +211,7 @@ class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
             $campaign = new \CampaignRabbit\CampaignRabbit\Action\Request($api_token,$app_id,$domain);
             $response = $campaign->request('POST','user/store/auth','');
             $out_response = $campaign->parseResponse($response);
+            $this->initialAuth();
         }catch (Exception $e){
             $ex_body = $e->getBody()->getContents();
             $out_response = array(
@@ -220,6 +221,31 @@ class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
             );
         }
         return $out_response;
+    }
+
+    /**
+     * init post request sent to campaign rabbit
+    */
+    public function initialAuth(){
+        $params = $this->getPluginParams();
+        $initialize = $params->get('initialize_auth',0);
+        if(!$initialize){
+            try{
+                $api_token = $params->get('api_token','');
+                $app_id = $params->get('app_id','');
+                $domain = trim(JUri::root());
+                $campaign = new \CampaignRabbit\CampaignRabbit\Action\Request($api_token,$app_id,$domain);
+                $response = $campaign->request('POST','store/initiated_sync','');
+                $out_response = $campaign->parseResponse($response);
+
+                if(isset($out_response['body']->success) && $out_response['body']->success){
+                    $params->set('initialize_auth',1);
+                    $this->saveParams($params);
+                }
+            }catch (Exception $e){
+                //$ex_body = $e->getBody()->getContents();
+            }
+        }
     }
 
     /**
@@ -566,7 +592,7 @@ class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
                 'meta' => $metas,
             );
         }
-
+        $this->initialAuth();
         $contact_status = false;
         try{
             // check customer exit
@@ -635,7 +661,6 @@ class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
                 return true;
             }
         }
-
         //$invoice_number = $order->getInvoiceNumber();
         $orderinfo = $order->getOrderInformation();
         //$order_status = false;
@@ -935,7 +960,7 @@ class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
             'order_id' =>$order->order_id,
             'task' => $task
         );
-
+        $this->initialAuth();
         $order_queue_params = $this->getRegistryObject(json_encode($queue_data));
         $status = $this->addSales($order_queue_params);
         if(!$status){
