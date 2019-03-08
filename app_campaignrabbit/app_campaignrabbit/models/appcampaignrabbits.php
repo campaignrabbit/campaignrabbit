@@ -204,28 +204,21 @@ class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
         if(empty($params)){
             $params = $this->getPluginParams();
         }
-        try{
-            $api_token = $params->get('api_token','');
-            $app_id = $params->get('app_id','');
-            $domain = trim(JUri::root());
-            $campaign = new \CampaignRabbit\CampaignRabbit\Action\Request($api_token,$app_id,$domain);
-            $response = $campaign->request('POST','user/store/auth','');
-            $out_response = $campaign->parseResponse($response);
+        $api_token = $params->get('api_token','');
+        $app_id = $params->get('app_id','');
+        $domain = trim(JUri::root());
+        $campaign = new \CampaignRabbit\CampaignRabbit\Action\Request($api_token,$app_id,$domain);
+        $response = $campaign->request('POST','user/store/auth','');
+        $out_response = $campaign->parseResponse($response);
+        if(isset($out_response['body']->success) && !empty($out_response['body']->success)){
             $this->initialAuth();
-        }catch (Exception $e){
-            $ex_body = $e->getBody()->getContents();
-            $out_response = array(
-                'message'=> $e->getReasonPhrase(),
-                'code'=>$e->getStatusCode(),
-                'body'=> isset($ex_body->data) ? $ex_body->data: $ex_body
-            );
         }
         return $out_response;
     }
 
     /**
      * init post request sent to campaign rabbit
-    */
+     */
     public function initialAuth(){
         $params = $this->getPluginParams();
         $initialize = $params->get('initialize_auth',0);
@@ -255,20 +248,11 @@ class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
      */
     public function getCustomer($email){
         $params = $this->getPluginParams();
-        try{
-            $api_token = $params->get('api_token','');
-            $app_id = $params->get('app_id','');
-            $domain = trim(JUri::root());
-            $customer = new \CampaignRabbit\CampaignRabbit\Action\Customer($api_token,$app_id,$domain);
-            $out_response = $customer->getCustomer($email);
-        }catch (Exception $e){
-            $ex_body = $e->getBody()->getContents();
-            $out_response = array(
-                'message'=> $e->getReasonPhrase(),
-                'code'=>$e->getStatusCode(),
-                'body'=> isset($ex_body->data) ? $ex_body->data: $ex_body
-            );
-        }
+        $api_token = $params->get('api_token','');
+        $app_id = $params->get('app_id','');
+        $domain = trim(JUri::root());
+        $customer = new \CampaignRabbit\CampaignRabbit\Action\Customer($api_token,$app_id,$domain);
+        $out_response = $customer->getCustomer($email);
         return $out_response;
     }
 
@@ -281,14 +265,15 @@ class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
      */
     public function updateCustomer($customer_params,$email){
         $params = $this->getPluginParams();
-        try{
-            $api_token = $params->get('api_token','');
-            $app_id = $params->get('app_id','');
-            $domain = trim(JUri::root());
+        $api_token = $params->get('api_token','');
+        $app_id = $params->get('app_id','');
+        $domain = trim(JUri::root());
 
-            $customer = new \CampaignRabbit\CampaignRabbit\Action\Customer($api_token,$app_id,$domain);
+        $customer = new \CampaignRabbit\CampaignRabbit\Action\Customer($api_token,$app_id,$domain);
 
-            $out_response = $customer->updateCustomer($customer_params,$email);
+        $out_response = $customer->updateCustomer($customer_params,$email);
+        /*try{
+
         }catch (Exception $e){
             $ex_body = $e->getBody()->getContents();
             $out_response = array(
@@ -296,7 +281,7 @@ class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
                 'code'=>$e->getStatusCode(),
                 'body'=> isset($ex_body->data) ? $ex_body->data: $ex_body
             );
-        }
+        }*/
         return $out_response;
     }
 
@@ -310,22 +295,14 @@ class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
      */
     public function createCustomer($customer_params){
         $params = $this->getPluginParams();
-        try{
-            $api_token = $params->get('api_token','');
-            $app_id = $params->get('app_id','');
-            $domain = trim(JUri::root());
-            $customer = new \CampaignRabbit\CampaignRabbit\Action\Customer($api_token,$app_id,$domain);
-            //$campaign = new \CampaignRabbit\CampaignRabbit\Action\Request($api_token,$app_id,$domain);
-            $out_response = $customer->createCustomer($customer_params);//$campaign->request('POST','customer',json_encode($where));
-            //$out_response = $campaign->parseResponse($response);
-        }catch (Exception $e){
-            $ex_body = $e->getBody()->getContents();
-            $out_response = array(
-                'message'=> $e->getReasonPhrase(),
-                'code'=>$e->getStatusCode(),
-                'body'=> isset($ex_body->data) ? $ex_body->data: $ex_body
-            );
-        }
+        $api_token = $params->get('api_token','');
+        $app_id = $params->get('app_id','');
+        $domain = trim(JUri::root());
+        $customer = new \CampaignRabbit\CampaignRabbit\Action\Customer($api_token,$app_id,$domain);
+        //$campaign = new \CampaignRabbit\CampaignRabbit\Action\Request($api_token,$app_id,$domain);
+        $out_response = $customer->createCustomer($customer_params);//$campaign->request('POST','customer',json_encode($where));
+        //$out_response = $campaign->parseResponse($response);
+
         return $out_response;
     }
 
@@ -336,20 +313,11 @@ class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
      */
     public function getRabbitOrder($order){
         $params = $this->getPluginParams();
-        try{
-            $api_token = $params->get('api_token','');
-            $app_id = $params->get('app_id','');
-            $domain = trim(JUri::root());
-            $rabbit_order = new \CampaignRabbit\CampaignRabbit\Action\Order($api_token,$app_id,$domain);
-            $out_response = $rabbit_order->getOrderByRef($order->order_id);
-        }catch (Exception $e){
-            $ex_body = $e->getBody()->getContents();
-            $out_response = array(
-                'message'=> $e->getReasonPhrase(),
-                'code'=>$e->getStatusCode(),
-                'body'=> isset($ex_body->data) ? $ex_body->data: $ex_body
-            );
-        }
+        $api_token = $params->get('api_token','');
+        $app_id = $params->get('app_id','');
+        $domain = trim(JUri::root());
+        $rabbit_order = new \CampaignRabbit\CampaignRabbit\Action\Order($api_token,$app_id,$domain);
+        $out_response = $rabbit_order->getOrderByRef($order->order_id);
         return $out_response;
     }
 
@@ -361,30 +329,15 @@ class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
      */
     public function updateRabbitOrder($order,$order_params){
         $params = $this->getPluginParams();
-        try{
-            $api_token = $params->get('api_token','');
-            $app_id = $params->get('app_id','');
-            $domain = trim(JUri::root());
-            $rabbit_order = new \CampaignRabbit\CampaignRabbit\Action\Order($api_token,$app_id,$domain);
-            $old_rabbit_order = $rabbit_order->getOrderByRef($order->order_id);
-            if(isset($old_rabbit_order['body']->id)){
-                $out_response = $rabbit_order->updateOrder($order_params,$old_rabbit_order['body']->id);
-            }else{
-                $ex_body = $old_rabbit_order->getBody()->getContents();
-                $out_response = array(
-                    'message'=> $old_rabbit_order->getReasonPhrase(),
-                    'code'=> $old_rabbit_order->getStatusCode(),
-                    'body'=> isset($ex_body->data) ? $ex_body->data: $ex_body//$old_rabbit_order->getBody()->getContents()
-                );
-            }
-
-        }catch (Exception $e){
-            $ex_body = $e->getBody()->getContents();
-            $out_response = array(
-                'message'=> $e->getReasonPhrase(),
-                'code'=>$e->getStatusCode(),
-                'body'=> isset($ex_body->data) ? $ex_body->data: $ex_body
-            );
+        $api_token = $params->get('api_token','');
+        $app_id = $params->get('app_id','');
+        $domain = trim(JUri::root());
+        $rabbit_order = new \CampaignRabbit\CampaignRabbit\Action\Order($api_token,$app_id,$domain);
+        $old_rabbit_order = $rabbit_order->getOrderByRef($order->order_id);
+        if(isset($old_rabbit_order['body']->id)){
+            $out_response = $rabbit_order->updateOrder($order_params,$old_rabbit_order['body']->id);
+        }else{
+            $out_response = $old_rabbit_order;
         }
         return $out_response;
     }
@@ -397,20 +350,11 @@ class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
      */
     public function createRabbitOrder($order,$order_params){
         $params = $this->getPluginParams();
-        try{
-            $api_token = $params->get('api_token','');
-            $app_id = $params->get('app_id','');
-            $domain = trim(JUri::root());
-            $rabbit_order = new \CampaignRabbit\CampaignRabbit\Action\Order($api_token,$app_id,$domain);
-            $out_response = $rabbit_order->createOrder($order_params);
-        }catch (Exception $e){
-            $ex_body = $e->getBody()->getContents();
-            $out_response = array(
-                'message'=> $e->getReasonPhrase(),
-                'code'=>$e->getStatusCode(),
-                'body'=> isset($ex_body->data) ? $ex_body->data: $ex_body
-            );
-        }
+        $api_token = $params->get('api_token','');
+        $app_id = $params->get('app_id','');
+        $domain = trim(JUri::root());
+        $rabbit_order = new \CampaignRabbit\CampaignRabbit\Action\Order($api_token,$app_id,$domain);
+        $out_response = $rabbit_order->createOrder($order_params);
         return $out_response;
     }
 
@@ -426,37 +370,30 @@ class J2StoreModelAppCampaignRabbits extends J2StoreAppModel
             return '';
         }
         $params = $this->getPluginParams();
-        try{
-            $api_token = $params->get('api_token','');
-            $app_id = $params->get('app_id','');
-            $domain = trim(JUri::root());
-            $rabbit_order = new \CampaignRabbit\CampaignRabbit\Action\Product($api_token,$app_id,$domain);
-            $out_response = $rabbit_order->getProduct($product_params['sku']);
+        $api_token = $params->get('api_token','');
+        $app_id = $params->get('app_id','');
+        $domain = trim(JUri::root());
+        $rabbit_order = new \CampaignRabbit\CampaignRabbit\Action\Product($api_token,$app_id,$domain);
+        $out_response = $rabbit_order->getProduct($product_params['sku']);
 
-            $is_need_update = false;
-            if(isset($out_response['body']->sku)){
-                $is_need_update = true;
-            }
-            if($is_need_update){
-                $product_response =  $rabbit_order->updateProduct($product_params,$product_params['sku']);
-            }else{
-                $product_response =  $rabbit_order->createProduct($product_params);
-            }
-
-            if(isset($product_response['body']->sku)){
-                $this->_log(json_encode($product_response),'Product Create/Update: ');
-                $order->add_history('Campaign Rabbit Product sku : '.$product_params['sku']);
-            }
-        }catch (Exception $e){
-            $ex_body = $e->getBody()->getContents();
-            $out_response = array(
-                'message'=> $e->getReasonPhrase(),
-                'code'=>$e->getStatusCode(),
-                'body'=> isset($ex_body->data) ? $ex_body->data: $ex_body
-            );
-            $this->_log(json_encode($out_response),'Product Error: ');
-            $order->add_history($product_params['sku']. ' - Campaign Rabbit Product Error: '.json_encode($out_response));
+        $is_need_update = false;
+        if(isset($out_response['body']->sku)){
+            $is_need_update = true;
         }
+        if($is_need_update){
+            $product_response =  $rabbit_order->updateProduct($product_params,$product_params['sku']);
+        }else{
+            $product_response =  $rabbit_order->createProduct($product_params);
+        }
+
+        if(isset($product_response['body']->sku)){
+            $this->_log(json_encode($product_response),'Product Create/Update: ');
+            $order->add_history('Campaign Rabbit Product sku : '.$product_params['sku']);
+        }else{
+            $this->_log(json_encode($product_response),'Product Error: ');
+            $order->add_history($product_params['sku']. ' - Campaign Rabbit Product Error: '.json_encode($product_response));
+        }
+
 
         return $out_response;
     }
