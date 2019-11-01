@@ -101,10 +101,21 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
         return $status;
     }
 
+    public function initCheck(){
+        $app_id = $this->params->get('app_id','');
+        $api_token = $this->params->get('api_token','');
+        $status = true;
+        if(empty($app_id) || empty($api_token)){
+            $status = false;
+        }
+        return $status;
+    }
+
     public function onJ2StoreAfterDisplayShippingPayment($order){
         $status = $this->checkPHPVersion();
+        $init_check = $this->initCheck();
         $html = '';
-        if($status){
+        if($status && $init_check){
             $html = $this->displayOptIn('payment');
         }
         return $html;
@@ -125,8 +136,9 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
 
     public function onJ2StoreCheckoutValidateShippingPayment($values, $order){
         $status = $this->checkPHPVersion();
+        $init_check = $this->initCheck();
         $html = '';
-        if(!$status){
+        if(!$status || !$init_check){
             return $html;
         }
         $session = JFactory::getSession();
@@ -202,8 +214,9 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
     public function onJ2StorePrePayment($orderpayment_type, $data){
 
         $status = $this->checkPHPVersion();
+        $init_check = $this->initCheck();
         $html = '';
-        if(!$status){
+        if(!$status || !$init_check){
             return $html;
         }
         if(isset($data['order_id']) && !empty($data['order_id'])){
@@ -232,26 +245,35 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
      *
      */
     function onJ2StoreAfterCreateNewOrder($order){
-        F0FModel::addIncludePath(JPATH_SITE.'/plugins/j2store/app_campaignrabbit/app_campaignrabbit/models');
-        $model = F0FModel::getTmpInstance('AppCampaignRabbits', 'J2StoreModel');
-        return $model->orderSyn($order);
+        $status = $this->checkPHPVersion();
+        $init_check = $this->initCheck();
+        if(!$status || !$init_check){
+            F0FModel::addIncludePath(JPATH_SITE.'/plugins/j2store/app_campaignrabbit/app_campaignrabbit/models');
+            $model = F0FModel::getTmpInstance('AppCampaignRabbits', 'J2StoreModel');
+            $model->orderSyn($order);
+        }
     }
 
     /**
      * Add Order details to Queue Table
      */
     function onJ2StoreAfterOrderstatusUpdate($order,$new_status){
-        F0FModel::addIncludePath(JPATH_SITE.'/plugins/j2store/app_campaignrabbit/app_campaignrabbit/models');
-        $model = F0FModel::getTmpInstance('AppCampaignRabbits', 'J2StoreModel');
-        return $model->orderSyn($order);
+        $status = $this->checkPHPVersion();
+        $init_check = $this->initCheck();
+        if(!$status || !$init_check){
+            F0FModel::addIncludePath(JPATH_SITE.'/plugins/j2store/app_campaignrabbit/app_campaignrabbit/models');
+            $model = F0FModel::getTmpInstance('AppCampaignRabbits', 'J2StoreModel');
+            $model->orderSyn($order);
+        }
     }
 
 
 
     function onJ2StoreCheckoutAfterRegister(){
         $status = $this->checkPHPVersion();
+        $init_check = $this->initCheck();
         $html = '';
-        if(!$status){
+        if(!$status || !$init_check){
             return $html;
         }
         $session = JFactory::getSession();
@@ -309,8 +331,9 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
     public function onJ2StoreProcessQueue($list){
 
         $status = $this->checkPHPVersion();
+        $init_check = $this->initCheck();
         $html = '';
-        if(!$status){
+        if(!$status || !$init_check){
             return $html;
         }
 
@@ -371,8 +394,9 @@ class plgJ2StoreApp_campaignrabbit extends J2StoreAppPlugin
 
     public function onJ2StoreAdminOrderAfterGeneralInformation($order_view){
         $status = $this->checkPHPVersion();
+        $init_check = $this->initCheck();
         $html = '';
-        if(!$status){
+        if(!$status || !$init_check){
             return $html;
         }
         $is_enable_manuval = $this->params->get('syn_manual',0);
